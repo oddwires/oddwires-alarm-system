@@ -1,0 +1,58 @@
+Alarm status:
+Alarm..........:off
+Mode............Standby
+
+Alarm zone status:
+zs #1...........:1
+zs #2...........:1
+zs #3...........:1
+zs #4...........:1
+zs #5...........:1
+zs #6...........:1
+zs #7...........:1
+zs #8...........:1
+
+Alarm zone config:
+zc #1...........:alarm:Zone 1:on:on:on:false
+zc #2...........:alarm:Zone 2:on:on:on:false
+zc #3...........:alarm:Zone 3:on:on:on:false
+zc #4...........:alarm:Zone 4:on:on:off:false
+zc #5...........:alarm:Zone 5:on:on:off:false
+zc #6...........:alarm:Zone 6:on:on:off:false
+zc #7...........:alarm:Zone 7:off:off:off:false
+zc #8...........:alarm:Zone 8:off:off:off:false
+
+Remote Control status:
+RC channel #1...off
+RC channel #2...off
+RC channel #3...off
+RC channel #4...off
+RC channel #5...off
+
+Remote Control config:
+RC channel #1...:RC channel #1
+RC channel #2...:RC channel #2
+RC channel #3...:RC channel #3
+RC channel #4...:RC channel #4
+RC channel #5...:RC channel #5
+
+Configuration:
+Location........:
+Router IP.......:
+Local IP........:
+Alarm duration..:
+Disk used.......:
+Disk used %.....:
+Disk total......:
+Memory..........:
+Hardware........:
+
+Email:
+Email server....:
+Email port......:
+Email sender....:
+Email password..:
+
+Cron jobs:
+
+Users:
