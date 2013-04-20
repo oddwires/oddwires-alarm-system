@@ -8,11 +8,13 @@
 #################################################################################################################################
 #                                                                                                                               #
 # Features:                                                                                                                     #
+#     RasPi platform - compatable with Rev 1.0 and Rev 2.0 hardware                                                             #
 #     8 configurable alarm zones (cabled)                                                                                       #
 #     3 alarm modes: Standby, Part set, Full set                                                                                #
 #     5 configurable automation channels (radio controlled)                                                                     #
 #     Industry standard 12 volt interface to alarm sensors, bell boxes and strobe                                               #
 #     Full (internet) remote control using iPhone 4s web app interface                                                          #
+#     Animated page transitions and user controls - look and feel of a native app.                                              #
 #     eMail alerts for alarm events                                                                                             #
 #     Automatically detect changes to router IP address                                                                         #
 #     Scheduled tasks                                                                                                           #
@@ -70,21 +72,26 @@ EMAIL_password=""
 
 WriteUsers()
 { # Function to dump user credentials from memory to file.
-  if [ -f /var/www/user.txt ]; then                   # clear out previous results
+  if [ -f /var/www/user.txt ]; then                                # clear out previous results
     rm /var/www/user.txt; fi
   count=0
   for Usr in "${lgns[@]}"; do
     echo ${Usr}":"${pwds[${count}]}":"${emails[${count}]} >>/var/www/user.txt
     ((count++))
   done
-  sudo chown pi /var/www/user.txt                                 # found permissions issues on Windows 7 laptop - but this fixed it
+  sudo chown pi /var/www/user.txt                                  # found permissions issues on Windows 7 laptop - but this fixed it
   sudo chmod 777 /var/www/user.txt  
 }
 
 ReadUsers()
-{ # Function to load user credentials from file to memory.
-  echo loading
+#################################################################################################################################
+#                                                                                                                               #
+# Function to load user credentials from file to memory.                                                                        #
+#                                                                                                                               #
+#################################################################################################################################
+{ echo loading
   if [ -r /var/www/user.txt ]; then
+    count=0
     while read info; do
 #      echo $info                                                  # Diagnostic
        OLD_IFS="$IFS"                                              # new mechanism
@@ -93,48 +100,49 @@ ReadUsers()
        PARAMS=( $info )
        set +f                                                      # Globbing on
        IFS="$OLD_IFS"
-
-       lgns+=(${PARAMS[0]})                                        # transfer credentials to memory
-       pwds+=(${PARAMS[1]})
-       emails+=(${PARAMS[2]})
+       if [[ -z ${PARAMS[2]} ]] ; then                             # BASH arrays won't store a NULL character - elements following
+            PARAMS[2]="(no email)"                                 # a NULL will get shuffled down one. So if we need to detect a 
+       fi                                                          # NULL email, and write something in its place.
+       lgns[${count}]="${PARAMS[0]}"
+       pwds[${count}]="${PARAMS[1]}"
+       emails[${count}]="${PARAMS[2]}"
+       ((count++))
     done < /var/www/user.txt
   fi }
 
 CheckIP()
-{
-# Subroutine uses an external site to obtain router details. Full info of this site can be found at...
-# http://www.whatismyip.com/ip-faq/automation-rules
-#
-# Scheduled tasks should not exceed more then one hit every five minutes (300 seconds).
-#
-# Update: They changed the first site to require registration, so now I'm using the second.
-#Current_routerIP=$(curl -s http://automation.whatismyip.com/n09230945.asp) # hit the external site
-Current_routerIP=$(wget -q -O - checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
+#################################################################################################################################
+#                                                                                                                               #
+# Subroutine uses an external site http://checkip.dyndns.com to obtain router details.                                          #
+# This routing should not be called more then one hit every five minutes (300 seconds).                                         #
+#                                                                                                                               #
+#################################################################################################################################
+{ Current_routerIP=$(wget -q -O - checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
 
-if [[ $Current_routerIP != $SETUP_routerIP ]] ; then
-  tmp=${CURRTIME}",CheckIP,"${SETUP_routerIP}","${Current_routerIP}
-  echo $tmp >> $LOGFILE                                                    # log the event
-  echo $tmp                                                                # tell the user
+  if [[ $Current_routerIP != $SETUP_routerIP ]] ; then
+    tmp=${CURRTIME}",CheckIP,"${SETUP_routerIP}","${Current_routerIP}
+    echo $tmp >> $LOGFILE                                                    # log the event
+    echo $tmp                                                                # tell the user
 
-  title="Alarm system router IP change"
-  msg="Event logged at: "${CURRTIME}"\n\n"                                 # build a multi line string
-  msg=$msg"Old IP: "${SETUP_routerIP}"\nNew IP: "${Current_routerIP}"\n"
-  msg=$msg"\n** Message sent from RaspPi@"${Current_routerIP}" **"
-  eMail "$title" "$msg"
+    title="Alarm system router IP change"
+    msg="Event logged at: "${CURRTIME}"\n\n"                                 # build a multi line string
+    msg=$msg"Old IP: "${SETUP_routerIP}"\nNew IP: "${Current_routerIP}"\n"
+    msg=$msg"\n** Message sent from RaspPi@"${Current_routerIP}" **"
+    eMail "$title" "$msg"
 
-  SETUP_routerIP=${Current_routerIP}                                       # Update variable
-fi
+    SETUP_routerIP=${Current_routerIP}                                       # Update variable
+  fi
 
 # Refresh the remaining hardware details. This will identify if the disk is filling up etc.
 
-SETUP_localIP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-SETUP_diskused=$(df -h | grep rootfs | awk '{print $4}')
-SETUP_diskperc=$(df -h | grep rootfs | awk '{print $5}')
-SETUP_disktotal=$(df -h | grep rootfs | awk '{print $2}')
-tmp=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')                # in KB
-SETUP_memory=$((tmp /1024))M                                               # convert to MB
-tmp=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')                # DUPLICATE CODE - need to sort this out.
-case "$tmp" in
+  SETUP_localIP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+  SETUP_diskused=$(df -h | grep rootfs | awk '{print $4}')
+  SETUP_diskperc=$(df -h | grep rootfs | awk '{print $5}')
+  SETUP_disktotal=$(df -h | grep rootfs | awk '{print $2}')
+  tmp=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')                # in KB
+  SETUP_memory=$((tmp /1024))M                                               # convert to MB
+  tmp=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')                # DUPLICATE CODE - need to sort this out.
+  case "$tmp" in
    "0002")
        SETUP_model="Model B Rev 1.0";;
    "0003")
@@ -145,99 +153,102 @@ case "$tmp" in
        SETUP_model="Model B Rev 2.0 (512 MB)";;
    *)
        SETUP_model="Unknown Model";
-esac
-write_status_file status.txt                                               # pass updated alarm status to web page
-}
+  esac
+  write_status_file status.txt                                               # pass updated alarm status to web page
+  }
 
 InitPorts()
+#################################################################################################################################
+#                                                                                                                               #
+# BASH uses BCM GPIO numbers (the pin names on the Broadcom chip) to define the GPIO ports.                                     #
+# The code becomes a lot easier to debug if these numbers are mapped to physical pins on the RasPi GPIO header.                 #
+# I've also included the path to the Broadcom ports directory ('/sys/class/gpio/') to simplify usage.                           #
+#                                                                                                                               #
+#################################################################################################################################
 {
-CURRTIME=`date "+%H:%M:%S"`                                                # excel format
-LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # name derived from date
+CURRTIME=`date "+%H:%M:%S"`                                 # excel format
+LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"              # name derived from date
 
 hardware=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')           # Identify hardware we are running on.
 
-# BASH uses BCM GPIO numbers (the pin names on the Broadcom chip) to define the GPIO ports.
-# The code becomes a lot easier to debug if these numbers are mapped to physical pins on the RasPi GPIO header.
-# I've also included the path to the ports directory ('/sys/class/gpio/') to simplify usage.
-
-# Map physical pin to full Broadcom directory + pin name...
+# Map physical pin numbers to full Broadcom ports directory + port name...
           PIN_7=/sys/class/gpio/gpio4
-          PIN_26=/sys/class/gpio/gpio7               # Alarm bell output
+          PIN_26=/sys/class/gpio/gpio7                      # Alarm bell output
           PIN_24=/sys/class/gpio/gpio8
-          PIN_21=/sys/class/gpio/gpio9               # Audio mute output
-          PIN_23=/sys/class/gpio/gpio11              # Alarm strobe output
+          PIN_21=/sys/class/gpio/gpio9                      # Audio mute output
+          PIN_23=/sys/class/gpio/gpio11                     # Alarm strobe output
           PIN_11=/sys/class/gpio/gpio17
           PIN_12=/sys/class/gpio/gpio18
           PIN_15=/sys/class/gpio/gpio22
           PIN_16=/sys/class/gpio/gpio23
           PIN_18=/sys/class/gpio/gpio24
           PIN_22=/sys/class/gpio/gpio25
-# Also one of the pins changed name when the RasPi went from Rev 1.0 to Rev 2.0 hardware.
-if [[ $hardware = "0002" ]] || [[ $tmp = "0003" ]]; then
-          PIN_13=/sys/class/gpio/gpio21              # Rev 1.0 hardware
-          str="Rev 1.0 hardware"                     # string for log file
+# One of the pins changed name when the RasPi went from Rev 1.0 to Rev 2.0 hardware.
+if [[ $hardware = "0002" ]] || [[ $hardware = "0003" ]]; then
+          PIN_13=/sys/class/gpio/gpio21                     # Rev 1.0 hardware
+          str="Rev 1.0 hardware"                            # string for log file
 else
-          PIN_13=/sys/class/gpio/gpio27              # Rev 2.0 hardware (and anything newer)
-          str="Rev 2.0 hardware"                     # string for log file
+          PIN_13=/sys/class/gpio/gpio27                     # Rev 2.0 hardware (and anything newer)
+          str="Rev 2.0 hardware"                            # string for log file
 fi
 
 # So these are the 12 physical pins we are going to use...
 declare -a Allpins=('PIN_7' 'PIN_11' 'PIN_12' 'PIN_13' 'PIN_15' 'PIN_16'
                     'PIN_18' 'PIN_21' 'PIN_22' 'PIN_23' 'PIN_24' 'PIN_26')
 
-# Initialise the Broadcom ports associated with the physical pins.
+# Initialise the Broadcom ports associated with the physical pins...
 for thispin in "${Allpins[@]}"; do
-   tmp=${!thispin}                                   # Variable indirection
-#  echo $tmp                                         # DIAGNOSTIC - $tmp becomes the full Broadcom name for the physical pin
-   GPIOnum=${tmp:20}                                 # lose first 20 characters ('/sys/class/gpio/gpio') leaves just the number
-   if [ -d $tmp ]; then                              # if some other process is using the port...
-      echo ${GPIOnum} > /sys/class/gpio/unexport     # ...grab it back
+   tmp=${!thispin}                                          # 'Variable indirection' (Google it - I had to !)
+#  echo $tmp                                                # DIAGNOSTIC - $tmp becomes the full Broadcom name for the physical pin
+   GPIOnum=${tmp:20}                                        # lose first 20 characters ('/sys/class/gpio/gpio') leaves just the number
+   if [ -d $tmp ]; then                                     # if some other process is using the port...
+      echo ${GPIOnum} > /sys/class/gpio/unexport            # ...grab it back
    fi
-   echo ${GPIOnum} > /sys/class/gpio/export          # now the port is free, grab it for our use
+   echo ${GPIOnum} > /sys/class/gpio/export                 # now the port is free, grab it for our use
 done
 
 # Set 10 pins as outputs...
-echo "out" > $PIN_7/direction                        # (gpio4)
-echo "out" > $PIN_11/direction                       # (gpio17)
-echo "out" > $PIN_12/direction                       # (gpio18)
-echo "out" > $PIN_13/direction                       # (gpio21 or gpio27 depending on hardware)
-echo "out" > $PIN_15/direction                       # (gpio22)
-echo "out" > $PIN_16/direction                       # (gpio23)
-echo "out" > $PIN_18/direction                       # (gpio24)
-echo "out" > $PIN_21/direction                       # (gpio9)
-echo "out" > $PIN_23/direction                       # (gpio11)
-echo "out" > $PIN_26/direction                       # (gpio7)
+echo "out" > $PIN_7/direction                               # (gpio4)
+echo "out" > $PIN_11/direction                              # (gpio17)
+echo "out" > $PIN_12/direction                              # (gpio18)
+echo "out" > $PIN_13/direction                              # (gpio21 or gpio27 depending on hardware)
+echo "out" > $PIN_15/direction                              # (gpio22)
+echo "out" > $PIN_16/direction                              # (gpio23)
+echo "out" > $PIN_18/direction                              # (gpio24)
+echo "out" > $PIN_21/direction                              # (gpio9)
+echo "out" > $PIN_23/direction                              # (gpio11)
+echo "out" > $PIN_26/direction                              # (gpio7)
 
 # Set 2 pins as inputs...
-echo "in" > $PIN_24/direction                        # (gpio8)
-echo "in" > $PIN_22/direction                        # (gpio25)
+echo "in" > $PIN_24/direction                               # (gpio8)
+echo "in" > $PIN_22/direction                               # (gpio25)
 
 # Set outputs to inactive state...
-echo "0" > $PIN_7/value                              # LED Anode output   - inactive=low
-echo "0" > $PIN_11/value                             # LED Anode output   - inactive=low
-echo "0" > $PIN_12/value                             # LED Anode output   - inactive=low
-echo "0" > $PIN_13/value                             # LED Anode output   - inactive=low
-echo "1" > $PIN_15/value                             # LED Cathode output - inactive=high
-echo "1" > $PIN_16/value                             # LED Cathode output - inactive=high
-echo "1" > $PIN_18/value                             # LED Cathode output - inactive=high
-echo "1" > $PIN_21/value                             # Audio mute         - muted=high
-echo "0" > $PIN_26/value                             # Alarm bell         - inactive=low
-echo "0" > $PIN_23/value                             # Alarm strobe       - inactive=low
+echo "0" > $PIN_7/value                                     # LED Anode output   - inactive=low
+echo "0" > $PIN_11/value                                    # LED Anode output   - inactive=low
+echo "0" > $PIN_12/value                                    # LED Anode output   - inactive=low
+echo "0" > $PIN_13/value                                    # LED Anode output   - inactive=low
+echo "1" > $PIN_15/value                                    # LED Cathode output - inactive=high
+echo "1" > $PIN_16/value                                    # LED Cathode output - inactive=high
+echo "1" > $PIN_18/value                                    # LED Cathode output - inactive=high
+echo "1" > $PIN_21/value                                    # Audio mute         - muted=high
+echo "0" > $PIN_26/value                                    # Alarm bell         - inactive=low
+echo "0" > $PIN_23/value                                    # Alarm strobe       - inactive=low
 
 tmp=${CURRTIME}",(alarm),(RasPi),GPIO ports initialised for "${str}
-echo $tmp >> $LOGFILE                                # log the event
-echo $tmp                                            # tell the user
+echo $tmp >> $LOGFILE                                       # log the event
+echo $tmp                                                   # tell the user
 
 # Initialise sound drivers.
 sudo modprobe snd_bcm2835
 tmp=${CURRTIME}",(alarm),(RasPi),Sound drivers initialised"
-echo $tmp >> $LOGFILE                                # log the event
-echo $tmp                                            # tell the user
+echo $tmp >> $LOGFILE                                       # log the event
+echo $tmp                                                   # tell the user
 }
 
 eMail()
-{  tmp="";                                                # clear out variable
-   for usr in "${emails[@]}"; do                          # build current list of recipients
+{  tmp="";                                                  # clear out variable
+   for usr in "${emails[@]}"; do                            # build current list of recipients
      tmp=${tmp}${usr}","
    done
 
@@ -532,6 +543,7 @@ count=0
 for Usr in "${lgns[@]}"
 do
     echo ${Usr}","${emails[${count}]} >>/var/www/temp1.txt
+#   echo ${count}' - '${Usr}","${emails[${count}]}                 # DIAGNOSTIC
     ((count++))
 done
 rm /var/www/temp2.txt
@@ -677,6 +689,7 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"              # name derived from 
 
 if [ -f /var/www/user.txt ]; then                           # if we have any users defined, load them to memory
   ReadUsers
+# echo 'User 0-'${lgns[0]}'-'${emails[0]}'-'${pwds[0]}      # DIAGNOSTIC
   tmp="System restart - loading user credentials."          # msg for logfile
   echo $tmp >> $LOGFILE                                     # log the event
   echo $tmp                                                 # tell the user
@@ -730,15 +743,15 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                PARAMS2=( $info )
                set +f                                                      # Globbing on
                IFS="$OLD_IFS"
-# diagnostics - echo parameters being passed from web pages
-#              echo first parameter [0]=${PARAMS2[0]}                      # diagnostic - username
-#              echo second parameter [1]=${PARAMS2[1]}                     # diagnostic - IP address
-#              echo third parameter [2]=${PARAMS2[2]}                      # diagnostic - command
-#              echo fourth  parameter [3]=${PARAMS2[3]}                    # diagnostic - parameter
-#              echo fifth parameter [4]=${PARAMS2[4]}                      # diagnostic - parameter
-#              echo sixth  parameter [5]=${PARAMS2[5]}                     # diagnostic - parameter
-#              echo seventh parameter [6]=${PARAMS2[6]}                    # diagnostic - parameter
-#              echo eight parameter [7]=${PARAMS2[7]}                      # diagnostic - parameter
+# DIAGNOSTIC - echo parameters being passed from web pages
+#              echo first parameter [0]=${PARAMS2[0]}                      # DIAGNOSTIC - username
+#              echo second parameter [1]=${PARAMS2[1]}                     # DIAGNOSTIC - IP address
+#              echo third parameter [2]=${PARAMS2[2]}                      # DIAGNOSTIC - command
+#              echo fourth  parameter [3]=${PARAMS2[3]}                    # DIAGNOSTIC - parameter
+#              echo fifth parameter [4]=${PARAMS2[4]}                      # DIAGNOSTIC - parameter
+#              echo sixth  parameter [5]=${PARAMS2[5]}                     # DIAGNOSTIC - parameter
+#              echo seventh parameter [6]=${PARAMS2[6]}                    # DIAGNOSTIC - parameter
+#              echo eight parameter [7]=${PARAMS2[7]}                      # DIAGNOSTIC - parameter
 
                case "${PARAMS2[2]}" in
                  "logon" | "failed logon" | "logoff")                      # either way - just log it
@@ -820,19 +833,14 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    echo $tmp >> $LOGFILE                                   # log the event
                    echo $tmp                                               # tell the user
                    write_status_file default.txt;;                         # Save current user defaults to file
-                 "add usr")
-                   tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}","${PARAMS2[3]}","${PARAMS2[4]}
-                   echo $tmp >> $LOGFILE                                   # log the event
-                   echo $tmp                                               # tell the user
-                   lgns+=(${PARAMS2[3]})
-                   emails+=(${PARAMS2[4]})
-                   pwds+=('qwerty')                                        # lower case pw helps on iphone
-                   WriteUsers;;                                            # write changes to disk
-                 "edt usr")
+                 "edt usr")                                                # This section edits existing, and adds new users
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}","${PARAMS2[3]}","
                    tmp=$tmp${PARAMS2[4]}","${PARAMS2[5]}
                    echo $tmp >> $LOGFILE                                   # log the event
                    echo $tmp                                               # tell the user
+                   if [[ -z ${PARAMS2[5]} ]] ; then                        # BASH arrays won't store a NULL character - elements following
+                      PARAMS2[5]="(no email)"                              # a NULL will get shuffled down one. So if we need to detect a 
+                   fi                                                      # NULL email, and write something in its place.
                    pos=$((${PARAMS2[3]}-1))
                    lgns[$pos]=${PARAMS2[4]}
                    emails[$pos]=${PARAMS2[5]}
@@ -843,7 +851,7 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    echo $tmp                                               # tell the user
                    pos=$((${PARAMS2[3]}-1))                                # array zero is first user so bump value
                    if [ ${#lgns[*]} -gt 1 ]; then                          # don't allow delete last user
-                     lgns=("${lgns[@]:0:$pos}" "${lgns[@]:$(($pos + 1))}")     # remove element from all 3 arrays...
+                     lgns=("${lgns[@]:0:$pos}" "${lgns[@]:$(($pos + 1))}") # remove element from all 3 arrays...
                      emails=("${emails[@]:0:$pos}" "${emails[@]:$(($pos + 1))}")
                      pwds=("${pwds[@]:0:$pos}" "${pwds[@]:$(($pos + 1))}")
                    fi
