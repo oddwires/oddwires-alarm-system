@@ -21,6 +21,8 @@ sudo cp -R oddwires-alarm-system/* /var/www
 rm -f /var/www/install.sh                      # tidy up...
 rm -f /var/www/README.md
 
+sudo chown -R pi *                             # change file ownership to allow pi account to edit files
+
 # force Samba to clear cache and load the new pages...
 sudo service samba restart
 
