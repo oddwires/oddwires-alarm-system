@@ -124,37 +124,38 @@ CheckIP()
     echo $tmp >> $LOGFILE                                                    # log the event
     echo $tmp                                                                # tell the user
 
-    title="Alarm system router IP change"
-    msg="Event logged at: "${CURRTIME}"\n\n"                                 # build a multi line string
-    msg=$msg"Old IP: "${SETUP_routerIP}"\nNew IP: "${Current_routerIP}"\n"
-    msg=$msg"\n** Message sent from RaspPi@"${Current_routerIP}" **"
-    eMail "$title" "$msg"
+    title="Alarm system: Router IP change"
+#    msg="Event logged at: "${CURRTIME}"\n\n"                                 # build a multi line string
+#    msg=$msg"Old IP: "${SETUP_routerIP}"\nNew IP: "${Current_routerIP}"\n"
+#    msg=$msg"\n** Message sent from RaspPi@"${Current_routerIP}" **"
+    eMail "$title"
 
     SETUP_routerIP=${Current_routerIP}                                       # Update variable
   fi
 
 # Refresh the remaining hardware details. This will identify if the disk is filling up etc.
+# DUPLICATE CODE - need to sort this out.
 
-  SETUP_localIP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-  SETUP_diskused=$(df -h | grep rootfs | awk '{print $4}')
-  SETUP_diskperc=$(df -h | grep rootfs | awk '{print $5}')
-  SETUP_disktotal=$(df -h | grep rootfs | awk '{print $2}')
-  tmp=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')                # in KB
-  SETUP_memory=$((tmp /1024))M                                               # convert to MB
-  tmp=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')                # DUPLICATE CODE - need to sort this out.
-  case "$tmp" in
-   "0002")
-       SETUP_model="Model B Rev 1.0";;
-   "0003")
-       SETUP_model="Model B Rev 1.0 + ECN0001";;
-   "0004"|"0005"|"0006")
-       SETUP_model="Model B Rev 2.0";;
-   "000D"|"000E"|"00)f")
-       SETUP_model="Model B Rev 2.0 (512 MB)";;
-   *)
-       SETUP_model="Unknown Model";
-  esac
-  write_status_file status.txt                                               # pass updated alarm status to web page
+#  SETUP_localIP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+#  SETUP_diskused=$(df -h | grep rootfs | awk '{print $4}')
+#  SETUP_diskperc=$(df -h | grep rootfs | awk '{print $5}')
+#  SETUP_disktotal=$(df -h | grep rootfs | awk '{print $2}')
+#  tmp=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')                # in KB
+#  SETUP_memory=$((tmp /1024))M                                               # convert to MB
+#  tmp=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')                # DUPLICATE CODE - need to sort this out.
+#  case "$tmp" in
+#   "0002")
+#       SETUP_model="Model B Rev 1.0";;
+#   "0003")
+#       SETUP_model="Model B Rev 1.0 + ECN0001";;
+#   "0004"|"0005"|"0006")
+#       SETUP_model="Model B Rev 2.0";;
+#   "000D"|"000E"|"00)f")
+#       SETUP_model="Model B Rev 2.0 (512 MB)";;
+#   *)
+#       SETUP_model="Unknown Model";
+#  esac
+#  write_status_file status.txt                                               # pass updated alarm status to web page
   }
 
 InitPorts()
@@ -247,26 +248,79 @@ echo $tmp                                                   # tell the user
 }
 
 eMail()
-{  tmp="";                                                  # clear out variable
-   for usr in "${emails[@]}"; do                            # build current list of recipients
-     tmp=${tmp}${usr}","
+#################################################################################################################################
+#                                                                                                                               #
+# Performs a few basic checks on the email credentials.                                                                         #
+# If everything seems ok, a standard format email is sent out.                                                                  #
+# $1 = Subject                                                                                                                  #
+# Note: The Mailx MTA is being used without a configuration file, so all server connection details are passed as paramteres.    #
+#       This allows server details to be changed through the iPhone interface without having to get all 'Linuxy'                #
+#                                                                                                                               #
+#################################################################################################################################
+{  # Build the circulation list...
+   circlist="";                                             # clear out variable
+   for usr in "${emails[@]}"; do                            # build current circulation list
+     circlist=${circlist}${usr}","
    done
-
-  # quick and dirty test for valid email configuration....
+  # Quick and dirty test for valid email configuration....
   if [[ ${EMAIL_server} == "" ]] || [[ ${EMAIL_port} == "" ]] || \
      [[ ${EMAIL_sender} == "" ]] || [[ ${EMAIL_password} == "" ]] || \
-     [[ ${tmp} == "" ]] ; then
-     echo "invalid email credentials or no circulation list - email not sent";
+     [[ ${circlist} == "" ]] ; then
+     tmp=${CURRTIME}",(alarm),(RasPi),Invalid email credentials or no circulation list - email not sent"
+     echo $tmp >> $LOGFILE                                  # log the event
+     echo $tmp                                              # tell the user
   else
-     # falls through here if we have some kind of email configuration and a circulation list
-     tmp=" -f $EMAIL_sender -t "${tmp}
-     set -f                                                 # Globbing off
-     tmp=${tmp%?}" -u "$1" -m "$2" -s "$EMAIL_server":"$EMAIL_port" -o tls=no -xu "$EMAIL_sender" -xp "$EMAIL_password
-#     echo                                                  # diagnostic
-#     echo ${tmp}                                           # diagnostic - make sure message format is ok
-#     echo                                                  # diagnostic
-     sendEmail ${tmp}                                       # make it so ! (sic)
-     set +f                                                 # Globbing on
+     # Falls through here if we have some kind of email configuration and some kind of circulation list
+     # We still can't guarantee the email will go, but lets try anyway...
+     # Update the system info...
+       SETUP_localIP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+       SETUP_diskused=$(df -h | grep rootfs | awk '{print $4}')
+       SETUP_diskperc=$(df -h | grep rootfs | awk '{print $5}')
+       SETUP_disktotal=$(df -h | grep rootfs | awk '{print $2}')
+       tmp=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')                # in KB
+       SETUP_memory=$((tmp /1024))M                                               # convert to MB
+       tmp=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')                # DUPLICATE CODE - need to sort this out.
+       case "$tmp" in
+         "0002")
+            SETUP_model="Model B Rev 1.0";;
+         "0003")
+            SETUP_model="Model B Rev 1.0 + ECN0001";;
+         "0004"|"0005"|"0006")
+            SETUP_model="Model B Rev 2.0";;
+         "000d"|"000e"|"000f")
+            SETUP_model="Model B Rev 2.0 (512 MB)";;
+         *)
+            SETUP_model="Unknown Model";
+       esac
+     # Build the message...
+       msg='From: \t\t\t'$SETUP_location
+       msg=$msg'\nEvent logged at:\t'${CURRTIME}
+
+       msg=$msg'\n\nTriggered zones:\t'
+       zones=''
+       if ${z1[5]} ; then zones=$zones${z1[1]}'\n\t\t\t' ; fi # Zone 1 triggered, so add name
+       if ${z2[5]} ; then zones=$zones${z2[1]}'\n\t\t\t' ; fi # Zone 2 triggered, so add name
+       if ${z3[5]} ; then zones=$zones${z3[1]}"\n\t\t\t" ; fi # Zone 3 triggered, so add name
+       if ${z4[5]} ; then zones=$zones${z4[1]}"\n\t\t\t" ; fi # Zone 4 triggered, so add name
+       if ${z5[5]} ; then zones=$zones${z5[1]}"\n\t\t\t" ; fi # Zone 5 triggered, so add name
+       if ${z6[5]} ; then zones=$zones${z6[1]}"\n\t\t\t" ; fi # Zone 6 triggered, so add name
+       if ${z7[5]} ; then zones=$zones${z7[1]}"\n\t\t\t" ; fi # Zone 7 triggered, so add name
+       if ${z8[5]} ; then zones=$zones${z8[1]}"\n\t\t\t" ; fi # Zone 8 triggered, so add name
+       if [[ ${zones} == "" ]] ; then zones='None\n' ; fi     # default case - none triggered
+       msg=$msg$zones
+
+       msg=$msg'\nHardware:\t\t'${SETUP_model}
+       msg=$msg'\nMemory:\t\t'${SETUP_memory}
+       msg=$msg'\nDisk used:\t\t'${SETUP_diskused}' of '${SETUP_disktotal}' ('${SETUP_diskperc}' free)'
+       msg=$msg'\n\nLocal IP:\t\t'http://${SETUP_localIP}
+       msg=$msg'\n\nRouter IP:\t\t'http://${SETUP_routerIP}
+     # Build the mailx command string...
+       set -f                                               # Globbing off
+       tmp='echo -e "'$msg'" | mailx -s "'$1'" -S smtp-use-starttls -S ssl-verify=ignore -S smtp-auth=login
+       -S smtp=smtp://'$EMAIL_server':'$EMAIL_port' -S from="'$EMAIL_sender'"
+       -S smtp-auth-user='$EMAIL_sender' -S smtp-auth-password='$EMAIL_password' '$circlist
+     eval $tmp                                              # send the email without echoing all the credentials to the screen
+     set +f                                                 # Globbing back on
   fi
 }
 
@@ -566,22 +620,22 @@ echo "0" > $PIN_21/value                                 # Audio on
 /var/www/Scripts/alm.sh &                                # start alarm background process
 disown                                                   # surpress messages from shell
 
-title="ALARM ACTIVE"
-msg=""                                                   # build a multi line string
-msg=$msg"Event logged at: "${CURRTIME}"\n\n"
-msg=$msg"Triggered zone(s):""\n"
+title="Alarm system: ACTIVE"
+#msg=""                                                   # build a multi line string
+#msg=$msg"Event logged at: "${CURRTIME}"\n\n"
+#msg=$msg"Triggered zone(s):""\n"
 
-if ${z1[5]} ; then msg=$msg"     "${z1[1]}"\n" ; fi # Zone 1 triggered, so add name
-if ${z2[5]} ; then msg=$msg"     "${z2[1]}"\n" ; fi # Zone 2 triggered, so add name
-if ${z3[5]} ; then msg=$msg"     "${z3[1]}"\n" ; fi # Zone 3 triggered, so add name
-if ${z4[5]} ; then msg=$msg"     "${z4[1]}"\n" ; fi # Zone 4 triggered, so add name
-if ${z5[5]} ; then msg=$msg"     "${z5[1]}"\n" ; fi # Zone 5 triggered, so add name
-if ${z6[5]} ; then msg=$msg"     "${z6[1]}"\n" ; fi # Zone 6 triggered, so add name
-if ${z7[5]} ; then msg=$msg"     "${z7[1]}"\n" ; fi # Zone 7 triggered, so add name
-if ${z8[5]} ; then msg=$msg"     "${z8[1]}"\n" ; fi # Zone 8 triggered, so add name
+#if ${z1[5]} ; then msg=$msg"     "${z1[1]}"\n" ; fi # Zone 1 triggered, so add name
+#if ${z2[5]} ; then msg=$msg"     "${z2[1]}"\n" ; fi # Zone 2 triggered, so add name
+#if ${z3[5]} ; then msg=$msg"     "${z3[1]}"\n" ; fi # Zone 3 triggered, so add name
+#if ${z4[5]} ; then msg=$msg"     "${z4[1]}"\n" ; fi # Zone 4 triggered, so add name
+#if ${z5[5]} ; then msg=$msg"     "${z5[1]}"\n" ; fi # Zone 5 triggered, so add name
+#if ${z6[5]} ; then msg=$msg"     "${z6[1]}"\n" ; fi # Zone 6 triggered, so add name
+#if ${z7[5]} ; then msg=$msg"     "${z7[1]}"\n" ; fi # Zone 7 triggered, so add name
+#if ${z8[5]} ; then msg=$msg"     "${z8[1]}"\n" ; fi # Zone 8 triggered, so add name
 
-msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
-eMail "${title}" "${msg}"
+#msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
+eMail "${title}"
 
 case "$SETUP_duration" in
    "5s")
@@ -702,11 +756,11 @@ if [ -f /var/www/default.txt ]; then                        # If we have user de
                                                             # email credentials
   echo $tmp >> $LOGFILE                                     # log the event
   echo $tmp                                                 # tell the user
-  title="Alarm system restart"                              # Send email reporting the restart - Note: this email might
-  msg="Event logged at: "${CURRTIME}"\n\n"                  # contain out of date IP info.
-  msg=$msg$tmp2"\n"
-  msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
-  eMail "$title" "$msg"
+  title="Alarm system: Restart"                              # Send email reporting the restart - Note: this email might
+#  msg="Event logged at: "${CURRTIME}"\n\n"                  # contain out of date IP info.
+#  msg=$msg$tmp2"\n"
+#  msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
+  eMail "$title"
 else
   load_status_file /var/www/factory.txt                     # If user defaults aren't available, load for factory defaults.
                                                             # Note: No valid email credentials, so can't send email
@@ -766,13 +820,13 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    alarm_tests                                             # check if this causes an alarm
                    sw1_old="1" ; sw2_old="1" ; sw3_old="1" ; sw4_old="1"   # reset zone states NB this can trigger
                    sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
-                   title="Alarm system mode: "${PARAMS2[3]}
-                   msg=""                                                  # build a multi line string
-                   msg=$msg"Event logged at: "${CURRTIME}"\n"
-                   msg=$msg"User: "${PARAMS2[0]}"\n"
-                   msg=$msg"Location: "${PARAMS2[1]}"\n\n"
-                   msg=$msg"** Message sent from RaspPi@"${SETUP_routerIP}" **"
-                   eMail "$title" "$msg";;
+                   title="Alarm system: "${PARAMS2[3]}
+#                   msg=""                                                  # build a multi line string
+#                   msg=$msg"Event logged at: "${CURRTIME}"\n"
+#                   msg=$msg"User: "${PARAMS2[0]}"\n"
+#                   msg=$msg"Location: "${PARAMS2[1]}"\n\n"
+#                   msg=$msg"** Message sent from RaspPi@"${SETUP_routerIP}" **"
+                   eMail "$title";;
                  "timeout")
                    # this command is created by a background task and not the web page
                    CURRTIME=`date "+%H:%M:%S"`                              # excel format
@@ -790,23 +844,23 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                       echo "1" > $PIN_21/value                              # Audio mute
                    fi
 
-                   title="ALARM TIMEOUT"
-                   msg=""                                                   # build a multi line string
-                   msg=$msg"Event logged at: "${CURRTIME}"\n\n"
-                   msg=$msg"Triggered zone(s):""\n"
+                   title="Alarm system: TIMEOUT"
+#                   msg=""                                                   # build a multi line string
+#                   msg=$msg"Event logged at: "${CURRTIME}"\n\n"
+#                   msg=$msg"Triggered zone(s):""\n"
 
-                   if ${z1[5]} ; then msg=$msg"     "${z1[1]}"\n" ; fi # Zone 1 name
-                   if ${z2[5]} ; then msg=$msg"     "${z2[1]}"\n" ; fi # Zone 2 name
-                   if ${z3[5]} ; then msg=$msg"     "${z3[1]}"\n" ; fi # Zone 3 name
-                   if ${z4[5]} ; then msg=$msg"     "${z4[1]}"\n" ; fi # Zone 4 name
-                   if ${z5[5]} ; then msg=$msg"     "${z5[1]}"\n" ; fi # Zone 5 name
-                   if ${z6[5]} ; then msg=$msg"     "${z6[1]}"\n" ; fi # Zone 6 name
-                   if ${z7[5]} ; then msg=$msg"     "${z7[1]}"\n" ; fi # Zone 7 name
-                   if ${z8[5]} ; then msg=$msg"     "${z8[1]}"\n" ; fi # Zone 8 name
+#                   if ${z1[5]} ; then msg=$msg"     "${z1[1]}"\n" ; fi # Zone 1 name
+#                   if ${z2[5]} ; then msg=$msg"     "${z2[1]}"\n" ; fi # Zone 2 name
+#                   if ${z3[5]} ; then msg=$msg"     "${z3[1]}"\n" ; fi # Zone 3 name
+#                   if ${z4[5]} ; then msg=$msg"     "${z4[1]}"\n" ; fi # Zone 4 name
+#                   if ${z5[5]} ; then msg=$msg"     "${z5[1]}"\n" ; fi # Zone 5 name
+#                   if ${z6[5]} ; then msg=$msg"     "${z6[1]}"\n" ; fi # Zone 6 name
+#                   if ${z7[5]} ; then msg=$msg"     "${z7[1]}"\n" ; fi # Zone 7 name
+#                   if ${z8[5]} ; then msg=$msg"     "${z8[1]}"\n" ; fi # Zone 8 name
 
-                   msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
-                   eMail "$title" "$msg"
-                   echo $alarm;;                                               # DIAGNOSTIC
+#                   msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
+                   eMail "$title";;
+#                   echo $alarm;;                                               # DIAGNOSTIC
                  "app setup")
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}","${PARAMS2[3]}","${PARAMS2[4]}
                    echo $tmp >> $LOGFILE                                   # log the event
@@ -895,13 +949,13 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    sw1_old="1" ; sw2_old="1" ; sw3_old="1" ; sw4_old="1"   # reset zone states NB this can trigger
                    sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
                    alarm_tests                                             # tamper zones can still cause a trigger
-                   title="Alarm system reset"
-                   msg=""                                                  # build a multi line string
-                   msg=$msg"Event logged at: "${CURRTIME}"\n"
-                   msg=$msg"User: "${PARAMS2[0]}"\n"
-                   msg=$msg"Location: "${PARAMS2[1]}"\n\n"
-                   msg=$msg"** Message sent from RaspPi@"${SETUP_routerIP}" **"
-                   eMail "$title" "$msg";;
+                   title="Alarm system: Reset"
+#                   msg=""                                                  # build a multi line string
+#                   msg=$msg"Event logged at: "${CURRTIME}"\n"
+#                   msg=$msg"User: "${PARAMS2[0]}"\n"
+#                   msg=$msg"Location: "${PARAMS2[1]}"\n\n"
+#                   msg=$msg"** Message sent from RaspPi@"${SETUP_routerIP}" **"
+                   eMail "$title";;
                  "test bell")
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}
                    echo $tmp >> $LOGFILE                                   # log the event
