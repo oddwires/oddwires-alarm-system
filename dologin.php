@@ -42,7 +42,7 @@ header('Location: /alarm.php#alarm');  // go to next screen on the existing subn
       </div><br>
       <div class="info">
          Username or Password incorrect.<br>
-         Your computers IP address is ';
+         Your IP address is ';
          echo $_SERVER['REMOTE_ADDR'].'<br></div><br>';
          echo '<div class="info">
          Your attempt to access this system<br>

@@ -321,6 +321,9 @@ eMail()
        -S smtp-auth-user='$EMAIL_sender' -S smtp-auth-password='$EMAIL_password' '$circlist
      eval $tmp                                              # send the email without echoing all the credentials to the screen
      set +f                                                 # Globbing back on
+     tmp=${CURRTIME}",(alarm),(RasPi),"$1" - email sent"
+     echo $tmp >> $LOGFILE                                  # log the event
+     echo $tmp                                              # tell the user
   fi
 }
 
