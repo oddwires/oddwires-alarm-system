@@ -125,38 +125,11 @@ CheckIP()
     echo $tmp                                                                # tell the user
 
     title="Alarm system: Router IP change"
-#    msg="Event logged at: "${CURRTIME}"\n\n"                                 # build a multi line string
-#    msg=$msg"Old IP: "${SETUP_routerIP}"\nNew IP: "${Current_routerIP}"\n"
-#    msg=$msg"\n** Message sent from RaspPi@"${Current_routerIP}" **"
     eMail "$title"
 
     SETUP_routerIP=${Current_routerIP}                                       # Update variable
   fi
-
-# Refresh the remaining hardware details. This will identify if the disk is filling up etc.
-# DUPLICATE CODE - need to sort this out.
-
-#  SETUP_localIP=$(/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
-#  SETUP_diskused=$(df -h | grep rootfs | awk '{print $4}')
-#  SETUP_diskperc=$(df -h | grep rootfs | awk '{print $5}')
-#  SETUP_disktotal=$(df -h | grep rootfs | awk '{print $2}')
-#  tmp=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')                # in KB
-#  SETUP_memory=$((tmp /1024))M                                               # convert to MB
-#  tmp=$(cat /proc/cpuinfo | grep Revision | awk '{print $3}')                # DUPLICATE CODE - need to sort this out.
-#  case "$tmp" in
-#   "0002")
-#       SETUP_model="Model B Rev 1.0";;
-#   "0003")
-#       SETUP_model="Model B Rev 1.0 + ECN0001";;
-#   "0004"|"0005"|"0006")
-#       SETUP_model="Model B Rev 2.0";;
-#   "000D"|"000E"|"00)f")
-#       SETUP_model="Model B Rev 2.0 (512 MB)";;
-#   *)
-#       SETUP_model="Unknown Model";
-#  esac
-#  write_status_file status.txt                                               # pass updated alarm status to web page
-  }
+}
 
 InitPorts()
 #################################################################################################################################
@@ -233,8 +206,8 @@ echo "1" > $PIN_15/value                                    # LED Cathode output
 echo "1" > $PIN_16/value                                    # LED Cathode output - inactive=high
 echo "1" > $PIN_18/value                                    # LED Cathode output - inactive=high
 echo "1" > $PIN_21/value                                    # Audio mute         - muted=high
-echo "0" > $PIN_26/value                                    # Alarm bell         - inactive=low
 echo "0" > $PIN_23/value                                    # Alarm strobe       - inactive=low
+echo "0" > $PIN_26/value                                    # Alarm bell         - inactive=low
 
 tmp=${CURRTIME}",(alarm),(RasPi),GPIO ports initialised for "${str}
 echo $tmp >> $LOGFILE                                       # log the event
@@ -260,7 +233,9 @@ eMail()
 {  # Build the circulation list...
    circlist="";                                             # clear out variable
    for usr in "${emails[@]}"; do                            # build current circulation list
-     circlist=${circlist}${usr}","
+     if [[ "$usr" != "(no email)" ]] ; then                 # Don't include accounts with no email - the MTA throws a dicky fit !
+       circlist=${circlist}${usr}","
+     fi
    done
   # Quick and dirty test for valid email configuration....
   if [[ ${EMAIL_server} == "" ]] || [[ ${EMAIL_port} == "" ]] || \
@@ -624,20 +599,6 @@ echo "0" > $PIN_21/value                                 # Audio on
 disown                                                   # surpress messages from shell
 
 title="Alarm system: ACTIVE"
-#msg=""                                                   # build a multi line string
-#msg=$msg"Event logged at: "${CURRTIME}"\n\n"
-#msg=$msg"Triggered zone(s):""\n"
-
-#if ${z1[5]} ; then msg=$msg"     "${z1[1]}"\n" ; fi # Zone 1 triggered, so add name
-#if ${z2[5]} ; then msg=$msg"     "${z2[1]}"\n" ; fi # Zone 2 triggered, so add name
-#if ${z3[5]} ; then msg=$msg"     "${z3[1]}"\n" ; fi # Zone 3 triggered, so add name
-#if ${z4[5]} ; then msg=$msg"     "${z4[1]}"\n" ; fi # Zone 4 triggered, so add name
-#if ${z5[5]} ; then msg=$msg"     "${z5[1]}"\n" ; fi # Zone 5 triggered, so add name
-#if ${z6[5]} ; then msg=$msg"     "${z6[1]}"\n" ; fi # Zone 6 triggered, so add name
-#if ${z7[5]} ; then msg=$msg"     "${z7[1]}"\n" ; fi # Zone 7 triggered, so add name
-#if ${z8[5]} ; then msg=$msg"     "${z8[1]}"\n" ; fi # Zone 8 triggered, so add name
-
-#msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
 eMail "${title}"
 
 case "$SETUP_duration" in
@@ -753,16 +714,14 @@ if [ -f /var/www/user.txt ]; then                           # if we have any use
 fi
 
 if [ -f /var/www/default.txt ]; then                        # If we have user defaults...
-  load_status_file /var/www/default.txt                     # ...load 'em
+#  load_status_file /var/www/default.txt                     # ...load 'em ** REMOVED FOR DEMO **
+  load_status_file /var/www/factory.txt                     # If user defaults aren't available, load for factory defaults.
   tmp="System restart - loading user default settings."     # msg for logfile
                                                             # if we have loaded user defaults, we should now have valid
                                                             # email credentials
   echo $tmp >> $LOGFILE                                     # log the event
   echo $tmp                                                 # tell the user
   title="Alarm system: Restart"                              # Send email reporting the restart - Note: this email might
-#  msg="Event logged at: "${CURRTIME}"\n\n"                  # contain out of date IP info.
-#  msg=$msg$tmp2"\n"
-#  msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
   eMail "$title"
 else
   load_status_file /var/www/factory.txt                     # If user defaults aren't available, load for factory defaults.
@@ -775,7 +734,6 @@ fi
 CheckIP                                                     # Refresh current IP and all other hardware details. If the
                                                             # IP is not the same as loaded by the defaults, an additional
                                                             # event will be logged, and an additional email will be sent
-echo "Press [CTRL+C] to stop."
 
 #################################################################################################################################
 #                                                                                                                               #
@@ -824,11 +782,6 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    sw1_old="1" ; sw2_old="1" ; sw3_old="1" ; sw4_old="1"   # reset zone states NB this can trigger
                    sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
                    title="Alarm system: "${PARAMS2[3]}
-#                   msg=""                                                  # build a multi line string
-#                   msg=$msg"Event logged at: "${CURRTIME}"\n"
-#                   msg=$msg"User: "${PARAMS2[0]}"\n"
-#                   msg=$msg"Location: "${PARAMS2[1]}"\n\n"
-#                   msg=$msg"** Message sent from RaspPi@"${SETUP_routerIP}" **"
                    eMail "$title";;
                  "timeout")
                    # this command is created by a background task and not the web page
@@ -839,31 +792,16 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    rm -f /var/www/status.txt                                # normally done by the web page, but this time
                                                                             # has to be done through BASH
                    alarm="Timed out !"
-                   echo "0" > $PIN_26/value                                 # set bell port inactive
-                   echo "0" > $PIN_23/value                                 # set strobe port inactive
+##                   echo "0" > $PIN_26/value                                 # set bell port inactive
+##                   echo "0" > $PIN_23/value                                 # set strobe port inactive
                    if [ -n "$(pgrep alm.sh)" ]; then                        # check for sounder process running If it is ...
                       pkill alm.sh                                          # ... kill it.
                       pkill aplay
                       echo "1" > $PIN_21/value                              # Audio mute
                    fi
-
-                   title="Alarm system: TIMEOUT"
-#                   msg=""                                                   # build a multi line string
-#                   msg=$msg"Event logged at: "${CURRTIME}"\n\n"
-#                   msg=$msg"Triggered zone(s):""\n"
-
-#                   if ${z1[5]} ; then msg=$msg"     "${z1[1]}"\n" ; fi # Zone 1 name
-#                   if ${z2[5]} ; then msg=$msg"     "${z2[1]}"\n" ; fi # Zone 2 name
-#                   if ${z3[5]} ; then msg=$msg"     "${z3[1]}"\n" ; fi # Zone 3 name
-#                   if ${z4[5]} ; then msg=$msg"     "${z4[1]}"\n" ; fi # Zone 4 name
-#                   if ${z5[5]} ; then msg=$msg"     "${z5[1]}"\n" ; fi # Zone 5 name
-#                   if ${z6[5]} ; then msg=$msg"     "${z6[1]}"\n" ; fi # Zone 6 name
-#                   if ${z7[5]} ; then msg=$msg"     "${z7[1]}"\n" ; fi # Zone 7 name
-#                   if ${z8[5]} ; then msg=$msg"     "${z8[1]}"\n" ; fi # Zone 8 name
-
-#                   msg=$msg"\n** Message sent from RaspPi@"${SETUP_routerIP}" **"
-                   eMail "$title";;
-#                   echo $alarm;;                                               # DIAGNOSTIC
+                   alarm_tests                                              # tamper zones can still re-trigger
+                   title="Alarm system: TIMEOUT";;
+##                   eMail "$title";;                                       # DIAGNOSTIC - removed for demo
                  "app setup")
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}","${PARAMS2[3]}","${PARAMS2[4]}
                    echo $tmp >> $LOGFILE                                   # log the event
@@ -943,7 +881,8 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    fi
                    echo "0" > $PIN_26/value                                # set bell port inactive
                    echo "0" > $PIN_23/value                                # set strobe port inactive
-                   echo "0" > $PIN_21/value                                # set audio mute
+#                   echo "0" > $PIN_21/value                                # set audio mute
+                   echo "1" > $PIN_21/value                                # set audio mute
                    mode="Standby"
                    alarm="Set"                                             # clear any alarm condition
                    z1[5]="false" ; z2[5]="false" ; z3[5]="false"           # clear any triggered zones...
@@ -953,19 +892,14 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
                    alarm_tests                                             # tamper zones can still cause a trigger
                    title="Alarm system: Reset"
-#                   msg=""                                                  # build a multi line string
-#                   msg=$msg"Event logged at: "${CURRTIME}"\n"
-#                   msg=$msg"User: "${PARAMS2[0]}"\n"
-#                   msg=$msg"Location: "${PARAMS2[1]}"\n\n"
-#                   msg=$msg"** Message sent from RaspPi@"${SETUP_routerIP}" **"
                    eMail "$title";;
                  "test bell")
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}
                    echo $tmp >> $LOGFILE                                   # log the event
                    echo $tmp                                               # tell the user
                    echo "1" > $PIN_26/value                                # Set bell port active
-                   # set up background task to cancel the test in 5 seconds
-                   ( sleep 5
+                   # set up background task to cancel the test in 4 seconds
+                   ( sleep 4
                      echo "0" > $PIN_26/value                              # Set bell port inactive
                      break )&
                    ;;
@@ -974,8 +908,8 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    echo $tmp >> $LOGFILE                                   # log the event
                    echo $tmp                                               # tell the user
                    echo "1" > $PIN_23/value                                # Set strobe port active
-                   # set up background task to cancel the test in 10 secs
-                   ( sleep 10
+                   # set up background task to cancel the test in 5 secs
+                   ( sleep 5
                      echo "0" > $PIN_23/value                              # Set strobe port inactive
                      break )&
                    ;;

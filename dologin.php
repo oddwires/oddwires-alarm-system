@@ -28,7 +28,7 @@ fclose($file1);
 
 if($loginisvalid){
 //$tmp = $_SESSION['user'].":".$_SERVER['REMOTE_ADDR'].":logon";
-$tmp = $tmp[0].":".$_SERVER['REMOTE_ADDR'].":logon";
+$tmp = $username.":".$_SERVER['REMOTE_ADDR'].":logon";
 header('Location: /alarm.php#alarm');  // go to next screen on the existing subnet
 
 }else{
