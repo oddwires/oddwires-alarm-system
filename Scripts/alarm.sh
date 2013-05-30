@@ -744,7 +744,6 @@ CheckIP                                                     # Refresh current IP
 
 while :
 do
-#echo $alarm   # DIAGNOSTIC
 CURRTIME=`date "+%H:%M:%S"`                                                # excel format
 LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # name derived from date
      if [ -r /var/www/input.txt ];
@@ -792,16 +791,16 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    rm -f /var/www/status.txt                                # normally done by the web page, but this time
                                                                             # has to be done through BASH
                    alarm="Timed out !"
-##                   echo "0" > $PIN_26/value                                 # set bell port inactive
-##                   echo "0" > $PIN_23/value                                 # set strobe port inactive
+                   echo "0" > $PIN_26/value                                 # set bell port inactive
+                   echo "0" > $PIN_23/value                                 # set strobe port inactive
                    if [ -n "$(pgrep alm.sh)" ]; then                        # check for sounder process running If it is ...
                       pkill alm.sh                                          # ... kill it.
                       pkill aplay
                       echo "1" > $PIN_21/value                              # Audio mute
                    fi
                    alarm_tests                                              # tamper zones can still re-trigger
-                   title="Alarm system: TIMEOUT";;
-##                   eMail "$title";;                                       # DIAGNOSTIC - removed for demo
+                   title="Alarm system: TIMEOUT"
+                   eMail "$title";;
                  "app setup")
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}","${PARAMS2[3]}","${PARAMS2[4]}
                    echo $tmp >> $LOGFILE                                   # log the event
