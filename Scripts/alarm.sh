@@ -295,6 +295,7 @@ eMail()
        -S smtp=smtp://'$EMAIL_server':'$EMAIL_port' -S from="'$EMAIL_sender'"
        -S smtp-auth-user='$EMAIL_sender' -S smtp-auth-password='$EMAIL_password' '$circlist
      eval $tmp                                              # send the email without echoing all the credentials to the screen
+#    echo $tmp                                              # DIAGNOSTIC - used to check MAILX command line is ok
      set +f                                                 # Globbing back on
      tmp=${CURRTIME}",(alarm),(RasPi),"$1" - email sent"
      echo $tmp >> $LOGFILE                                  # log the event
@@ -714,8 +715,7 @@ if [ -f /var/www/user.txt ]; then                           # if we have any use
 fi
 
 if [ -f /var/www/default.txt ]; then                        # If we have user defaults...
-#  load_status_file /var/www/default.txt                     # ...load 'em ** REMOVED FOR DEMO **
-  load_status_file /var/www/factory.txt                     # If user defaults aren't available, load for factory defaults.
+  load_status_file /var/www/default.txt                     # ...load 'em
   tmp="System restart - loading user default settings."     # msg for logfile
                                                             # if we have loaded user defaults, we should now have valid
                                                             # email credentials
