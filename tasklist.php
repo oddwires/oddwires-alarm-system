@@ -29,7 +29,7 @@ include("readvars.php");                         // common code to read variable
                           { $tmp.="Hourly at ".$task[$j][0]." minutes<br>".$task[$j][5]; }      // Hourly recourance
                        else
                           {  if ($task[$j][4]!="*")                                             // if a day is specified but no hours...
-                                { $tmp.=$tmp."On ".$days[$task[$j][4]-1]."s...<br>...at ";      // ...daily recourance (eg on Mondays)
+                                { $tmp.=$tmp."On ".$days[$task[$j][4]]."s...<br>...at ";        // ...daily recourance (eg on Mondays)
                                   $tmp.=$task[$j][1].":".$task[$j][0]."<br>".$task[$j][5]; }    // add the task info
                              else                                                               // day and hours not specified...
                                 { $tmp.="Daily at ";                                            // every day

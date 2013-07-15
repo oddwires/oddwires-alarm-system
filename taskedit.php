@@ -73,10 +73,12 @@ $task[$number][4]='*'; }
                <ul class="rounded" style="width:100%; margin-left:0px; margin-top:0px; margin-bottom:0px;">
                      <li><select id="weekday"><option value="*"<?php if (strcmp("*",$task[$number][4])==0) echo " selected=\"selected\""; ?>>*</option>
                            <?php $days=array("Sun","Mon","Tue","Wed","Thur","Fri","Sat");
-                                 for ($i=1; $i<=7; $i++ )
+//                                 for ($i=1; $i<=7; $i++ )
+                                 for ($i=0; $i<=6; $i++ )
                                    { echo "\n<option value=\"".$i."\"";
                                      if (strcmp($i,$task[$number][4])==0) echo " selected=\"selected\"";
-                                     echo ">".$days[$i-1]."</option>"; } ?>
+                                     echo ">".$days[$i]."</option>"; } ?>
+//                                   echo ">".$days[$i-1]."</option>"; } 
                      </select></li></ul>
                </td>
                <td>&nbsp</td>
