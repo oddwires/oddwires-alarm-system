@@ -37,7 +37,7 @@ declare -a pwds=()
 
 # can't use a 2 dimensional array to store the alarm zone config, so use a separate array for each zone.
 # format of each array is 'type', 'name','chimes','full set','part set','trigger status'
-# I've assigned default values, but these will be overwritten at startup by either rhe user or factory defaults.
+# I've assigned default values, but these will be overwritten at startup by either the user or factory defaults.
 
 declare -a z1=('alarm' 'Zone 1' 'off' 'on' 'off' 'false')
 declare -a z2=('alarm' 'Zone 2' 'off' 'on' 'off' 'false')
@@ -402,56 +402,56 @@ set -f                                        # Globbing off
                 z1[2]=${STR_ARRAY[3]}         # Chimes
                 z1[3]=${STR_ARRAY[4]}         # Full set
                 z1[4]=${STR_ARRAY[5]}         # Part set
-                z1[5]=${STR_ARRAY[6]};;       # Trigger status
+                z1[5]="false";;               # Trigger status - reset to false
           "zc #2...........")                 # Zone 2 ...
                 z2[0]=${STR_ARRAY[1]}         # Type
                 z2[1]=${STR_ARRAY[2]}         # Name
                 z2[2]=${STR_ARRAY[3]}         # Chimes
                 z2[3]=${STR_ARRAY[4]}         # Full set
                 z2[4]=${STR_ARRAY[5]}         # Part set
-                z2[5]=${STR_ARRAY[6]};;       # Trigger status
+                z2[5]="false";;               # Trigger status - reset to false
           "zc #3...........")                 # Zone 3 ...
                 z3[0]=${STR_ARRAY[1]}         # Type
                 z3[1]=${STR_ARRAY[2]}         # Name
                 z3[2]=${STR_ARRAY[3]}         # Chimes
                 z3[3]=${STR_ARRAY[4]}         # Full set
                 z3[4]=${STR_ARRAY[5]}         # Part set
-                z3[5]=${STR_ARRAY[6]};;       # Trigger status
+                z3[5]="false";;               # Trigger status - reset to false
           "zc #4...........")                 # Zone 4 ...
                 z4[0]=${STR_ARRAY[1]}         # Type
                 z4[1]=${STR_ARRAY[2]}         # Name
                 z4[2]=${STR_ARRAY[3]}         # Chimes
                 z4[3]=${STR_ARRAY[4]}         # Full set
                 z4[4]=${STR_ARRAY[5]}         # Part set
-                z4[5]=${STR_ARRAY[6]};;       # Trigger status
+                z4[5]="false";;               # Trigger status - reset to false
           "zc #5...........")                 # Zone 5 ...
                 z5[0]=${STR_ARRAY[1]}         # Type
                 z5[1]=${STR_ARRAY[2]}         # Name
                 z5[2]=${STR_ARRAY[3]}         # Chimes
                 z5[3]=${STR_ARRAY[4]}         # Full set
                 z5[4]=${STR_ARRAY[5]}         # Part set
-                z5[5]=${STR_ARRAY[6]};;       # Trigger status
+                z5[5]="false";;               # Trigger status - reset to false
           "zc #6...........")                 # Zone 6 ...
                 z6[0]=${STR_ARRAY[1]}         # Type
                 z6[1]=${STR_ARRAY[2]}         # Name
                 z6[2]=${STR_ARRAY[3]}         # Chimes
                 z6[3]=${STR_ARRAY[4]}         # Full set
                 z6[4]=${STR_ARRAY[5]}         # Part set
-                z6[5]=${STR_ARRAY[6]};;       # Trigger status
+                z6[5]="false";;               # Trigger status - reset to false
           "zc #7...........")                 # Zone 7 ...
                 z7[0]=${STR_ARRAY[1]}         # Type
                 z7[1]=${STR_ARRAY[2]}         # Name
                 z7[2]=${STR_ARRAY[3]}         # Chimes
                 z7[3]=${STR_ARRAY[4]}         # Full set
                 z7[4]=${STR_ARRAY[5]}         # Part set
-                z7[5]=${STR_ARRAY[6]};;       # Trigger status
+                z7[5]="false";;               # Trigger status - reset to false
           "zc #8...........")                 # Zone 8 ...
                 z8[0]=${STR_ARRAY[1]}         # Type
                 z8[1]=${STR_ARRAY[2]}         # Name
                 z8[2]=${STR_ARRAY[3]}         # Chimes
                 z8[3]=${STR_ARRAY[4]}         # Full set
                 z8[4]=${STR_ARRAY[5]}         # Part set
-                z8[5]=${STR_ARRAY[6]};;       # Trigger status
+                z8[5]="false";;               # Trigger status - reset to false
           "RC channel #1...")                 # RC channel 1 ...
                 RCc[0]=${info[0]:17};;        # loose first 17 characters...
           "RC channel #2...")                 # RC channel 2 ...
@@ -618,21 +618,21 @@ zoneconfig()
 {
 case "$1" in
    "1")                                                          # zone #1
-     z1[0]=$2; z1[1]=$3;z1[2]=$4; z1[3]=$5; z1[4]=$6 z1[5]=$7;;
+     z1[0]=$2; z1[1]=$3;z1[2]=$4; z1[3]=$5; z1[4]=$6 z1[5]="false";;
    "2")                                                          # zone #2
-     z2[0]=$2; z2[1]=$3;z2[2]=$4; z2[3]=$5; z2[4]=$6 z2[5]=$7;;
+     z2[0]=$2; z2[1]=$3;z2[2]=$4; z2[3]=$5; z2[4]=$6 z2[5]="false";;
    "3")                                                          # zone #3
-     z3[0]=$2; z3[1]=$3;z3[2]=$4; z3[3]=$5; z3[4]=$6 z3[5]=$7;;
+     z3[0]=$2; z3[1]=$3;z3[2]=$4; z3[3]=$5; z3[4]=$6 z3[5]="false";;
    "4")                                                          # zone #4
-     z4[0]=$2; z4[1]=$3;z4[2]=$4; z4[3]=$5; z4[4]=$6 z4[5]=$7;;
+     z4[0]=$2; z4[1]=$3;z4[2]=$4; z4[3]=$5; z4[4]=$6 z4[5]="false";;
    "5")                                                          # zone #5
-     z5[0]=$2; z5[1]=$3;z5[2]=$4; z5[3]=$5; z5[4]=$6 z5[5]=$7;;
+     z5[0]=$2; z5[1]=$3;z5[2]=$4; z5[3]=$5; z5[4]=$6 z5[5]="false";;
    "6")                                                          # zone #6
-     z6[0]=$2; z6[1]=$3;z6[2]=$4; z6[3]=$5; z6[4]=$6 z6[5]=$7;;
+     z6[0]=$2; z6[1]=$3;z6[2]=$4; z6[3]=$5; z6[4]=$6 z6[5]="false";;
    "7")                                                          # zone #7
-     z7[0]=$2; z7[1]=$3;z7[2]=$4; z7[3]=$5; z7[4]=$6 z7[5]=$7;;
+     z7[0]=$2; z7[1]=$3;z7[2]=$4; z7[3]=$5; z7[4]=$6 z7[5]="false";;
    "8")                                                          # zone #8
-     z8[0]=$2; z8[1]=$3;z8[2]=$4; z8[3]=$5; z8[4]=$6 z8[5]=$7;;
+     z8[0]=$2; z8[1]=$3;z8[2]=$4; z8[3]=$5; z8[4]=$6 z8[5]="false";;
 esac
 }
 
@@ -780,6 +780,7 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    alarm_tests                                             # check if this causes an alarm
                    sw1_old="1" ; sw2_old="1" ; sw3_old="1" ; sw4_old="1"   # reset zone states NB this can trigger
                    sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
+#                   alarm_tests                                             # check if this causes an alarm - SHOULDN'T THIS BE HERE ??
                    title="Alarm system: "${PARAMS2[3]}
                    eMail "$title";;
                  "timeout")
