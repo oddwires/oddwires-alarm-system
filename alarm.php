@@ -35,7 +35,10 @@ include("readvars.php");                         // common code to read variable
             <tr><td align="center"><h2 style="margin-left: 15px; margin-right: 10px">Mode:</h2></td>
             <td><ul class="rounded" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px">
                 <li class="arrow">
-                  <select name="mode" id="modew" onchange="selectchange()">  // passing current value alows for canceling operation
+<!--           IOS 7 Bodge - Thanx for nothing Apple !!!  -->
+<!--              <select name="mode" id="modew" onchange="selectchange()">  // passing current value alows for canceling operation -->
+                  <select name="mode" id="modew" onchange="setTimeout('selectchange()',200)">  // delaying dialog box prevents IOS7 hanging.
+                                                                                               // passing current value alows for canceling operation
                     <optgroup label="Select alarm mode:">
                       <option <?php if (strcasecmp("Full Set",rtrim($status[1]))==0) echo "selected=\"selected\""; ?>>Full Set</option>
                       <option <?php if (strcasecmp("Part Set",rtrim($status[1]))==0) echo "selected=\"selected\""; ?>>Part Set</option>
