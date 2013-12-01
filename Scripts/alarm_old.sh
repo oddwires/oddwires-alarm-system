@@ -776,22 +776,13 @@ LOGFILE="/var/www/logs/"`date +%Y-%m-%d`".csv"                             # nam
                    tmp=${CURRTIME}","${PARAMS2[0]}","${PARAMS2[1]}","${PARAMS2[2]}","${PARAMS2[3]}
                    echo $tmp >> $LOGFILE                                   # log the event
                    echo $tmp                                               # tell the user
-                   if [[ $mode != ${PARAMS2[3]} ]]; then
-                   # falls through here if we need to change the alarm mode...
-                       mode=${PARAMS2[3]}                                      # set new mode
-                       alarm_tests                                             # check if this causes an alarm
-                       sw1_old="1" ; sw2_old="1" ; sw3_old="1" ; sw4_old="1"   # reset zone states NB this can trigger
-                       sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
-#                      alarm_tests                                             # check if this causes an alarm
-                       title="Alarm system: "${PARAMS2[3]}
-                       eMail "$title"
-                   else
-                   # falls through here if the alarm is already in the selected mode.
-                   #  i.e. we have already set the alarm, so we want an early night and don't want to be disturbed by emails...
-                       tmp='Alarm system already in '${PARAMS2[3]}' - email surpressed.'
-                       echo $tmp >> $LOGFILE                                   # log the event
-                       echo $tmp                                               # tell the user
-                   fi;;
+                   mode=${PARAMS2[3]}                                      # set new mode
+                   alarm_tests                                             # check if this causes an alarm
+                   sw1_old="1" ; sw2_old="1" ; sw3_old="1" ; sw4_old="1"   # reset zone states NB this can trigger
+                   sw5_old="1" ; sw6_old="1" ; sw7_old="1" ; sw8_old="1"   # the alarm if any zone is open
+#                   alarm_tests                                             # check if this causes an alarm - SHOULDN'T THIS BE HERE ??
+                   title="Alarm system: "${PARAMS2[3]}
+                   eMail "$title";;
                  "timeout")
                    # this command is created by a background task and not the web page
                    CURRTIME=`date "+%H:%M:%S"`                              # excel format
