@@ -2,61 +2,89 @@
 include("readvars.php");                         // common code to read variables from file STATUS.TXT    
 ?>
 
-       <div id="setup" class="selectable">
-<?php //  print_r($_POST);             // DIAGNOSTIC ?>
-      <div class="toolbar">
-       <h1>Setup</h1>
-       <a href="#" class="back">< Prev</a>
-       <a href="alarm.php" class="button cube">Next ></a>
-<!--       <a class="button slideup" href="#about">About</a> -->
-      </div>
+<div id="setup" class="selectable">
+     <div class="toolbar"><h1>Setup</h1>
+         <a class="back menu" href="#menusheet">Menu</a>
+     </div>
+     <div id="setupscroll" class="scroll">
+    <!-- need to put a copy of setupscroll.php in here to handle the screen initialisation -->
+        <ul class="plastic" style="margin-top: 0">
+           <li class="arrow"><a href="#setup_app" onclick="SetupAppInit()" class="sliderleft">Application</a></li>
+           <li class="arrow"><a href="#setup_email" onclick="SetupEmailInit()">Email</a></li>
+           <li class="arrow"><a href="#themes">Themes <small class="counter">5</small></a></li>
+           <li class="arrow"><a href="#setup1" class="action">Defaults</a></li>
+        </ul>
+    <!-- Make all setupzone configuration data available on the page just in case we want to drill down and start
+     editing the configurations                                                                                   -->
+           <input type="hidden" id="SetupLoc" value="<?php echo $location; ?>">
+           <input type="hidden" id="SetupDur" value="<?php echo $duration; ?>">
+           <input type="hidden" id="SetupEserv" value="<?php echo $EMAIL_server; ?>">
+           <input type="hidden" id="SetupEport" value="<?php echo $EMAIL_port; ?>">
+           <input type="hidden" id="SetupEsend" value="<?php echo $EMAIL_sender; ?>">
+           <input type="hidden" id="SetupEpass" value="<?php echo $EMAIL_password; ?>">
+     </div>
+</div>
 
-      <div class="scroll">
-<!--      <form class="scroll"> -->
-           <h2>Application</h2>
-           <ul class="rounded">
-              <li><input type="text" name="location" placeholder="Location name" id="location" value="<?php echo $location; ?>"/></li>
-              <li class="arrow"><select id="period" name="period">
-                 <optgroup label="Alarm duration">
-                 <option <?php if (strcasecmp("15m",rtrim($duration))==0) echo "selected=\"selected\""; ?>value ="15m">15 minutes</option>
-                 <option <?php if (strcasecmp("9m",rtrim($duration))==0) echo "selected=\"selected\""; ?>value ="9m">9 minutes</option>
-                 <option <?php if (strcasecmp("5s",rtrim($duration))==0) echo "selected=\"selected\""; ?>value ="5s">5 seconds (test)</option>
-                 </optgroup>
-               </select></li>
-           </ul>
-           <h2>Email</h2>
-           <ul class="rounded">
-              <li><table border="0" style="width:100%"><tr><td style="width:65%">
-                  <input type="email" name="server" placeholder="Server name" id="server" value="<?php echo $EMAIL_server; ?>" />
-              </td><td>
-                  <input type="text" name="port" placeholder="Server port" id="port" value="<?php echo $EMAIL_port; ?>"/>
-              </td></tr></table></li>
-              <li><input type="email" name="email" placeholder="Send account" id="email" value="<?php echo $EMAIL_sender; ?>"/></li>
-              <li><input type="password" name="password" placeholder="Send account password" id="password" value="dummy123" /></li> <!-- use dummy password -->
-           </ul>
-           <table border="0" style="width:100%">
-               <tr><td style="width: 50%"><a href="#" onclick="buildstring()" class="whiteButton"  style="width: 60%">Save</a></td>
-               <td><a class="action whiteButton" href="index.php#setupactionsheet" style="width: 60%">Defaults</a></td></tr>
-           </table>
-<!--      </form> -->
-      </div>
+    <div id="setup_app" class="selectable">
+          <div class="toolbar"><h1>App setup</h1>
+                <a class="back slideright" onclick="SetupAppSend()" href="#setup">Back</a></div>
+                <p>&nbsp</p>
+                <p><ul class="plastic">
+                       <li><input type="text" placeholder="Installation name" id="location" value="TBD"/></li>
+                   </ul>
+                <div class="info2">
+                     Choose a name for this installation.<br>
+                     (Note: for maximum security, do not use your full address or postcode)
+                </div></p>
+                <p>&nbsp</p>
+-               <ul class="plastic">
+                    <li class="arrow"><a href="#setup_app_duration" id="Duration">Duration
+                        <small class="small" id="durtxt">TBD</small></a>
+                    </li>
+                </ul>
+                <div class="info2">
+                     Set the alarm duration.<br>
+                     This is the period that the alarm will sound before timing out.
+                </div>
+                <p>&nbsp</p>
+          </div>
+
+    <div id="setup_app_duration" class="selectable">
+            <div class="toolbar"><h1>Alarm Duration</h1>
+               <a href="#settings" class="back">Back</a></div>
+            <p>&nbsp</p>
+             <ul class="plastic">
+               <li class="arrow"><a href="#setup_app" onclick="passval2('durtxt','15 mins');
+                                                               jQT.goTo('#setup_app', 'slideright')">15 minutes</a></li>
+               <li class="arrow"><a href="#setup_app" onclick="passval2('durtxt','9 mins');
+                                                               jQT.goTo('#setup_app', 'slideright')">9 minutes</a></li>
+               <li class="arrow"><a href="#setup_app" onclick="passval2('durtxt','5 secs');
+                                                               jQT.goTo('#setup_app', 'slideright')">5 seconds (test mode)</a></li>
+             </ul>
     </div>
 
-<script type="text/javascript">
-    // Difference between PC and iPhone interface mean that assigning an 'onclick' event to a button won't work on an iphone.
-    // Instead we need to grab the 'ontap' event....
-    function buildstring() {
-        // Historically the two sections have been stored seperately,so need to do two write operations
-        var $tmp = 'app setup:' + document.getElementById('location').value;
-        var f = document.getElementsByName('period')[0];
-        $tmp = $tmp + ':' + f.options[f.selectedIndex].value;
-        document.getElementById('retval').value = $tmp;
-        ajaxrequest('setup.php', '');
-        $tmp = 'email setup:' + document.getElementById('server').value;
-        $tmp = $tmp + ':' + document.getElementById('port').value;
-        $tmp = $tmp + ':' + document.getElementById('email').value;
-        $tmp = $tmp + ':' + document.getElementById('password').value;
-        document.getElementById('retval').value = $tmp;
-        ajaxrequest('setup.php', '');
-    }
-</script>
+<div id="setup_email" class="selectable">
+    <div class="toolbar">
+           <h1>email</h1>
+           <a class="back slideright" onclick="SetupEmailSend()" href="#setup">Back</a>
+    </div>
+    <p>&nbsp</p>
+    <p><div class="info2">
+           Use these settings to connect to your email server.<br>
+    </div></p>
+    <p><ul class="rounded">
+           <li><input type="text" placeholder="email server name" id="SMTP_server" value="TBD"></li>
+       </ul></p>
+    <p>&nbsp</p>
+    <p><ul class="rounded">
+           <li><input type="text" placeholder="email server port" id="SMTP_port" value="TBD"></li>
+    </ul></p>
+    <p>&nbsp</p>
+    <p><ul class="rounded">
+           <li><input type="text" placeholder="email account" id="email_account" value="TBD"></li>
+       </ul></p>
+    <p>&nbsp</p>
+    <p><ul class="rounded">
+           <li><input type="password" placeholder="email account password" id="email_pwd" value="TBD"></li>
+       </ul></p>
+</div>

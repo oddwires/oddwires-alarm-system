@@ -3,93 +3,96 @@ include("readvars.php");                         // common code to read variable
 ?>
 
 <div id="alarm" class="selectable">
-<?php //  print_r($_POST);             // DIAGNOSTIC ?>
-           <div class="toolbar">
-             <h1>Alarm</h1>
-             <a href="#" class="back">< Prev</a>
-             <a href="doauto.php" class="button cube">Next ></a>
-           </div>
-
-          <form><ul class="edit rounded" style="margin-top: 5px; margin-bottom: 5px">
-            <table border="0" style="width: 100%">
-            <tr><td style="width: 20%"><h2 style="margin-left: 15px; margin-right: 10px">Status:</h2></td>
-                <td><ul class="rounded" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px; margin-right: 0px">
-                <?php switch ($status[0])
-                        { case "Set":
-                             echo '<li>Set';
-                             break;
-                           case "Active !":
-                             echo '<li style="background-color: #f00;">Active !';
-                             break;
-                           case "Timed out !":
-                             echo '<li style="background-color: #f00;">Timed out !';
-                             break;
-                         } ?>
-                </li></ul></td><td>
-                <a href="#" onclick="document.getElementById('retval').value='reset';
-                                     ajaxrequest('alarm.php', 'alarm');"
-                            class="greenButton" style="margin-bottom:5px; margin-top:5px; margin-left:15px; margin-right: 5px">
-                Reset</a>        
-                </td>
-            </tr>
-            <tr><td align="center"><h2 style="margin-left: 15px; margin-right: 10px">Mode:</h2></td>
-            <td><ul class="rounded" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px">
-                <li class="arrow">
-<!--           IOS 7 Bodge - Thanx for nothing Apple !!!  -->
-<!--              <select name="mode" id="modew" onchange="selectchange()">  // passing current value alows for canceling operation -->
-                  <select name="mode" id="modew" onchange="setTimeout('selectchange()',200)">  // delaying dialog box prevents IOS7 hanging.
-                                                                                               // passing current value alows for canceling operation
-                    <optgroup label="Select alarm mode:">
-                      <option <?php if (strcasecmp("Full Set",rtrim($status[1]))==0) echo "selected=\"selected\""; ?>>Full Set</option>
-                      <option <?php if (strcasecmp("Part Set",rtrim($status[1]))==0) echo "selected=\"selected\""; ?>>Part Set</option>
-                      <option <?php if (strcasecmp("Standby",rtrim($status[1]))==0) echo "selected=\"selected\""; ?>>Standby</option>
-                    </optgroup>
-                  </select>
-                </li>
+    <div class="toolbar"><h1>Alarm</h1>
+        <a class="back menu" href="#menusheet">Menu</a>
+    </div>
+    <!-- Alarm status panel is contained in a table -->
+        <table border="0" style="margin: 0px auto; align: center">
+        <tr><td style="width: 15%;">
+               <div class="RoundButton" style="font-size: 25px">
+                   <a href="#set" class="action" style="text-decoration: none">Set</a>
+               </div></td>
+            <td><ul class="rounded" style="margin-bottom: 0px; margin-top: 0px; margin-left: 0px; margin-right: 0px; text-align: center">
+                    <?php if ($status[0]=="Set") echo '<li>'.$status[1].'</li>';
+                          else                   echo '<li style="background-color: #f00;">'.$status[1].'</li>';  ?>
             </ul></td>
-            <td><a href="index.php#alarmactionsheet" class="action whiteButton"
-                   style="margin-bottom: 5px; margin-top: 5px; margin-left: 15px; margin-right: 5px">
-                   &nbspTest&nbsp
-            </a></td>
-            </tr></table></ul></form>
+            <td style="width: 15%">
+               <div class="RoundButton" style="font-size: 25px">
+                   <a href="#test" class="action" style="text-decoration: none">Test</a>
+            </div></td>
+        </tr></table>
 
-           <div class="scroll">
-            <h2 style="margin-top: 0px">Zones:</h2>
-            <ul class="rounded">
-            
-            <?php if ($zone[0][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=1"><?php echo $zone[0][2];?> <small><?php echo $label[0]; ?></small></a></li>
+    <div id="alarmscroll" class="scroll">
+        <h2 style="margin-top: 0px">Zones:</h2>
+        <ul class="rounded">
+        <?php for ($row=0; $row<=7; $row++) { ?>
+            <li class="arrow" <?php echo ($zone[$row][6]=="true") ? 'style="background-color: #f00;">' : '>'; ?>
+                <a href="#" onclick="AlarmConfJmp(<?php echo $row; ?>)" id="AlrmHlnk<?php echo $row; ?>">
+                     <?php echo $zone[$row][2];?> <small><?php echo $label[$row]; ?></small></a>
+            </li>
+        <?php } ?>
+    </div>
 
-            <?php if ($zone[1][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=2"><?php echo $zone[1][2];?> <small><?php echo $label[1]; ?></small></a></li>
+    <!-- Make all zone configuration data available on the page just in case we want to drill down and start
+     editing the zone configurations                                                                        -->
+        <?php for ($row=0; $row<=7; $row++) { ?>
+           <input type="hidden" id="ZoneType<?php echo $row; ?>" value="<?php echo $zone[$row][1]; ?>">
+           <input type="hidden" id="ZoneName<?php echo $row; ?>" value="<?php echo $zone[$row][2]; ?>">
+           <input type="hidden" id="ZoneChim<?php echo $row; ?>" value="<?php echo $zone[$row][3]; ?>">
+           <input type="hidden" id="ZoneFset<?php echo $row; ?>" value="<?php echo $zone[$row][4]; ?>">
+           <input type="hidden" id="ZonePset<?php echo $row; ?>" value="<?php echo $zone[$row][5]; ?>">
+           <input type="hidden" id="ZoneTrig<?php echo $row; ?>" value="<?php echo $zone[$row][6]; ?>">
+        <?php } ?>
+    </div>
 
-            <?php if ($zone[2][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=3"><?php echo $zone[2][2];?> <small><?php echo $label[2]; ?></small></a></li>
+<!--
+<div id="set" class="actionsheet">
+    <div class="actionchoices">
+           <a href="#" class="dismiss whiteButton" onclick="AlarmMode('mode:Day mode')">Day mode</a>
+           <a href="#" class="dismiss whiteButton" onclick="AlarmMode('mode:Night mode')">Night mode</a>
+           <a href="#" class="dismiss whiteButton" onclick="AlarmMode('mode:Standby')">Standby</a>
+           <a href="#" class="dismiss greenButton" onclick="AlarmMode('reset')">Reset</a>
+           <a href="#" class="redButton dismiss">Cancel</a>
+    </div>
+</div> -->
 
-            <?php if ($zone[3][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=4"><?php echo $zone[3][2];?> <small><?php echo $label[3]; ?></small></a></li>
+<!--
+<div id="test" class="actionsheet">
+    <div class="actionchoices">
+           <a href="#" class="dismiss whiteButton" onclick="AlarmMode('test bell')">External siren</a>
+           <a href="#" class="dismiss whiteButton" onclick="AlarmMode('test strobe')">External strobe</a>
+           <a href="#" class="dismiss whiteButton" onclick="AlarmMode('test sounder')">Internal sounder</a>
+           <a href="#" class="redButton dismiss">Cancel</a>
+    </div>
+</div> -->
 
-            <?php if ($zone[4][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=5"><?php echo $zone[4][2];?> <small><?php echo $label[4]; ?></small></a></li>
+<!-- Alarm zone configuration sub menu -->
+<div id="alarmconfig" class="selectable">
+      <div class="toolbar"><h1 id="AlarmConfHead">tbd</h1>
+          <a class="back slideright" onclick="AlarmCfgSend()" href="#alarm">Back</a>
+      </div>
 
-            <?php if ($zone[5][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=6"><?php echo $zone[5][2];?> <small><?php echo $label[5]; ?></small></a></li>
-
-            <?php if ($zone[6][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=7"><?php echo $zone[6][2];?> <small><?php echo $label[6]; ?></small></a></li>
-
-            <?php if ($zone[7][6]=="true") echo '<li class="arrow" style="background-color: #f00;">';
-            else                           echo '<li class="arrow">'; ?>
-            <a href="alarmcfg.php?num=8"><?php echo $zone[7][2];?> <small><?php echo $label[7]; ?></small></a></li>
-            </ul>
-            <input type="hidden" name="retval" id ="retval" />
-            <input type="hidden" id="modevaluebackup" value="<?php echo $status[1]; ?>" />
-          </div>
-</div>              <!-- Alarm screen             -->
+      <div class="scroll">
+         <h2>Name:</h2>
+         <ul class="rounded">
+            <li><input type="text" id="AlarmConfName" placeholder="Zone name" value="tbd"/></li>
+         </ul>
+         <h2>Settings:</h2>
+           <ul class="rounded">
+               <li><table border="0" width="100%">
+                     <tr><td style="width: 50%">
+                             <input type="radio" name="ZoneMode" id="AlarmZone" value="alarm" onclick="showHide('alarm');" />&nbsp&nbspAlarm</td>
+                         <td><input type="radio" name="ZoneMode" id="TamperZone" value="tamper" onclick="showHide('tamper');" />&nbsp&nbspTamper</td></tr>
+               </table></li>
+ 
+         <!-- Create a hideable div -->
+         <div id="alarmOptions">
+            <li>Day mode<span class="toggle">
+                <input type="checkbox" name="FS" id="ZoneFS" ></span></li>
+            <li>Night mode<span class="toggle">
+                <input type="checkbox" name="PS" id="ZonePS"></span></li>
+            <li>Chimes<span class="toggle">
+                <input type="checkbox" name="chimes" id="ZoneCH"></span></li>
+         </div>
+        </ul>
+      </div>

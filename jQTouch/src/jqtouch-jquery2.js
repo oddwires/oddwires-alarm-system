@@ -1,25 +1,25 @@
 /*
+           _/    _/_/    _/_/_/_/_/                              _/
+              _/    _/      _/      _/_/    _/    _/    _/_/_/  _/_/_/
+         _/  _/  _/_/      _/    _/    _/  _/    _/  _/        _/    _/
+        _/  _/    _/      _/    _/    _/  _/    _/  _/        _/    _/
+       _/    _/_/  _/    _/      _/_/      _/_/_/    _/_/_/  _/    _/
+      _/
+   _/
 
-            _/    _/_/    _/_/_/_/_/                              _/
-               _/    _/      _/      _/_/    _/    _/    _/_/_/  _/_/_/
-          _/  _/  _/_/      _/    _/    _/  _/    _/  _/        _/    _/
-         _/  _/    _/      _/    _/    _/  _/    _/  _/        _/    _/
-        _/    _/_/  _/    _/      _/_/      _/_/_/    _/_/_/  _/    _/
-       _/
-    _/
+   Created by David Kaneda <http://www.davidkaneda.com>
+   Maintained by Thomas Yip <http://beedesk.com/>
+   Sponsored by Sencha Labs <http://www.sencha.com/>
+   Special thanks to Jonathan Stark <http://www.jonathanstark.com/>
 
-    Created by David Kaneda <http://www.davidkaneda.com>
-    Maintained by Thomas Yip <http://beedesk.com/>
-    Sponsored by Sencha Labs <http://www.sencha.com/>
-    Special thanks to Jonathan Stark <http://www.jonathanstark.com/>
+   Documentation and issue tracking on GitHub <http://github.com/senchalabs/jQTouch/>
 
-    Documentation and issue tracking on GitHub <http://github.com/senchalabs/jQTouch/>
+   (c) 2009-2014 Sencha Labs
 
-    (c) 2009-2011 Sencha Labs
-    jQTouch may be freely distributed under the MIT license.
+   Version: 0.99.4-rc9 - 2014-05-17
 
+   jQTouch may be freely distributed under the MIT license.
 */
-
 (function($){
   var touch = {}, touchTimeout;
   var jQT;
@@ -46,17 +46,18 @@
     }
   }
 
-  if ($.jQTouch) {
-    $.jQTouch.addExtension(function GetInstance(jqt) {
+  if ($.jQT) {
+    $.jQT.addExtension(function GetInstance(jqt) {
       jQT = jqt;
       touchSelector = jQT.settings.touchSelector;
     });
   } else {
-    console.warn('Error: jQTouch not found.');
+    console.warn('Error: jQT not found.');
   }
 
-  $(document).ready(function(){    
-    var SUPPORT_TOUCH = (typeof Touch != "undefined");
+  $(document).ready(function(){
+    var SUPPORT_TOUCH = 'ontouchstart' in window;
+    console.log('==== SUPPORT_TOUCH? ' + SUPPORT_TOUCH);
     var START_EVENT = SUPPORT_TOUCH? 'touchstart' : 'mousedown';
     var MOVE_EVENT = SUPPORT_TOUCH? 'touchmove' : 'mousemove';
     var END_EVENT = SUPPORT_TOUCH? 'touchend' : 'mouseup';
@@ -98,7 +99,7 @@
 
       function bindEvents($el) {
           $el.bind(MOVE_EVENT, handlemove).bind(END_EVENT, handleend);
-          if ($.support.touch) {
+          if (SUPPORT_TOUCH) {
               $el.bind(CANCEL_EVENT, handlecancel);
           } else {
               $(document).bind('mouseout', handleend);
@@ -107,7 +108,7 @@
 
       function unbindEvents($el) {
           $el.unbind(MOVE_EVENT, handlemove).unbind(END_EVENT, handleend);
-          if ($.support.touch) {
+          if (SUPPORT_TOUCH) {
               $el.unbind(CANCEL_EVENT, handlecancel);
           } else {
               $(document).unbind('mouseout', handlecancel);
@@ -116,7 +117,7 @@
 
       function updateChanges(e) {
           var point = e.originalEvent;
-          var first = $.support.touch? point.changedTouches[0]: point;
+          var first = SUPPORT_TOUCH? point.changedTouches[0]: point;
           deltaX = first.pageX - startX;
           deltaY = first.pageY - startY;
           deltaT = (new Date).getTime() - startTime;
@@ -131,8 +132,8 @@
           inprogress = true, swipped = false, tapped = false,
           moved = false, timed = false, pressed = false;
           point = e.originalEvent;
-          startX = $.support.touch? point.changedTouches[0].pageX: point.pageX;
-          startY = $.support.touch? point.changedTouches[0].pageY: point.pageY;
+          startX = SUPPORT_TOUCH? point.changedTouches[0].pageX: point.pageX;
+          startY = SUPPORT_TOUCH? point.changedTouches[0].pageY: point.pageY;
           startTime = (new Date).getTime();
           endX = null, endY = null, endTime = null;
           deltaX = 0;
@@ -250,7 +251,7 @@
 
     } // End touch handler
 
-    $(document.body).bind('touchstart', touchstartHandler);
+    $(document.body).bind(START_EVENT, touchstartHandler);
   });
 
   ['swipe', 'swipeLeft', 'swipeRight', 'swipeUp', 'swipeDown', 'doubleTap', 'tap', 'singleTap', 'longTap'].forEach(function(m){

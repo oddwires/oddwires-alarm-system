@@ -32,7 +32,6 @@ $tmp = $username.":".$_SERVER['REMOTE_ADDR'].":logon";
 header('Location: /alarm.php#alarm');  // go to next screen on the existing subnet
 
 }else{
-      //$tmp = $_POST['username'].":".$_SERVER['REMOTE_ADDR'].":failed logon";
       $tmp = $tmp[0].":".$_SERVER['REMOTE_ADDR'].":failed logon";
       echo '
       <div>
@@ -50,5 +49,5 @@ header('Location: /alarm.php#alarm');  // go to next screen on the existing subn
        </div>
        ';   
       }
-    exec("echo $tmp >>/var/www/input.txt");
+    exec("echo $tmp >>/var/www/uploads/input.txt");
 ?>

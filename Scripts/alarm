@@ -1,19 +1,19 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides:          alarm
-# Required-Start:    $remote_fs $syslog
-# Required-Stop:     $remote_fs $syslog
+# Provides:          oddwires alarm
+# Required-Start:
+# Required-Stop:
 # Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Alarm Service
-# Description:       This file starts and stops the alarm service
+# Default-Stop:
+# Short-Description:
+# Description:       Alarm daemon
 ### END INIT INFO
 
 # Author: Tony @ oddwires.co.uk
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Oddwires Alarm Service"
+DESC="Oddwires Alarm daemon"
 NAME=alarm
 DAEMON=/usr/sbin/$NAME
 DAEMON_ARGS="--options args"
@@ -27,9 +27,12 @@ case "$1" in
   stop)
         echo "Stopping $DESC"
         sudo killall alarm.sh ;;
+  restart)
+        echo "Restarting $DESC"
+        sudo killall alarm.sh
+        sudo /var/www/Scripts/alarm.sh &;;
   *)
-       echo "Usage: $SCRIPTNAME {start|stop}"
+       echo "Usage: $SCRIPTNAME {start|stop|restart}"
        exit 3 ;;
 esac
 
-:

@@ -3,6 +3,12 @@
 header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 header("Cache-Control: no-cache");
 header("Pragma: no-cache");
+
+if (isset($_POST['retval']))
+{     exec("rm -f /var/www/uploads/status.txt");                 // remove old data
+      $tmp = $_COOKIE['username'].":".$_SERVER['REMOTE_ADDR'].":".$_POST['retval'];
+      exec("echo $tmp >>/var/www/uploads/input.txt");            // Pass data to the BASH shell script
+}
      
 $loggedin=(isset($_COOKIE['loggedin']) && $_COOKIE['loggedin']=='true')?true:false;
 $username=$_COOKIE["username"];
@@ -12,23 +18,18 @@ $jobcount=0;
 $triggeredzones=0;
 $openzones=0;
 $closedzones=0;
-
-if (isset($_POST['retval']))
-{     exec("rm -f /var/www/status.txt");                 // remove old data
-      $tmp = $_COOKIE['username'].":".$_SERVER['REMOTE_ADDR'].":".$_POST['retval'];
-      exec("echo $tmp >>/var/www/input.txt");            // Pass data to the BASH shell script
-}
-
-if (isset($_POST['settings']))
-{     exec("rm -f /var/www/status.txt");               // remove old data
-      $tmp = $_COOKIE['username'].":".$_SERVER['REMOTE_ADDR'].":load factory defaults";
-      exec("echo $tmp >>/var/www/input.txt");        // Send message to alarm service
-}
-
-// Read in data required to create this page .....
+$RCnum=1;
 $time = 4;                             // time in seconds to wait for the status file to be created.
 $found = false;
-$filename = '/var/www/status.txt';
+$filename = '/var/www/uploads/status.txt';
+$taskname=array("Check router IP address","Set mode: Standby","Set mode: Night mode","Set mode: Day mode",
+                "Switch RC1: On","Switch RC1: Off",
+                "Switch RC2: On","Switch RC2: Off",
+                "Switch RC3: On","Switch RC3: Off",
+                "Switch RC4: On","Switch RC4: Off",
+                "Switch RC5: On","Switch RC5: Off", );
+
+// Start reading the data file....
 for($i=0; $i<$time; $i++)
   { if (file_exists($filename))
       { // Falls through here if we have found it - so read the file ....
@@ -43,6 +44,7 @@ for($i=0; $i<$time; $i++)
                  $data = fgets($file);
                  $tmp=strlen($data)-16;                                   // skip first 16 characters
                  $status[0]=substr($data, -$tmp, -1);                     // Alarm status (white space removed from line end)
+//               $status[0]="Active !";                                   // DIAGNOSTIC
                  $data = fgets($file);
                  $tmp=strlen($data)-16;                                   // skip first 16 characters
                  $status[1]=substr($data, -$tmp); }                       // Alarm mode
@@ -65,39 +67,63 @@ for($i=0; $i<$time; $i++)
                   }
                }
               if (substr($data,0,18) == "Alarm zone config:") {           // skip down to the right section
-                 for ($row=0; $row<=7; $row++)
+              $ZoneNum = 0;
+              while (strlen($data)>1)                                     // last line of file often has no data in it, so only proceed if we have data ...
                    { $data = fgets($file);
                      $tmp=strlen($data)-16;                                // skip first 16 characters
                      $data=substr($data, -$tmp);
-                     $zone[$row]=(explode(":",$data));
-//                   $zone[8][6]='true';                                   // DIAGNOSTIC - fake triggered zone
-                     if ($zone[$row][6]=='true') { $triggeredzones++; }    // Zone triggered - bump the count
+                     $zone[$ZoneNum]=(explode(":",$data));
+//                   $zone[3][6]='true';                                   // DIAGNOSTIC - fake triggered zone
+//                   $zone[0][6]='true';                                   // DIAGNOSTIC - fake triggered zone
+                     if ($zone[$ZoneNum][6]=='true') { $triggeredzones++; }    // Zone triggered - bump the count
                      $label[$row]="";
-                     if ($zone[$row][4]=='on') { $label[$row].='F'; }      // Full set
-                     if ($zone[$row][5]=='on') { $label[$row].='P'; }      // Part set
-                     if ($zone[$row][3]=='on') { $label[$row].='C'; }      // Chimes
-                     if ($zone[$row][1]=='tamper') { $label[$row]='T'; }   // Tamper
+                     if ($zone[$ZoneNum][4]=='on') { $label[$ZoneNum].='D'; }      // Day mode
+                     if ($zone[$ZoneNum][5]=='on') { $label[$ZoneNum].='N'; }      // Night mode
+                     if ($zone[$ZoneNum][3]=='on') { $label[$ZoneNum].='C'; }      // Chimes
+                     if ($zone[$ZoneNum][1]=='tamper') { $label[$ZoneNum]='T'; }   // Tamper
+                     $ZoneNum++;
                    }
+                $ZoneNum--;                                                        // fudge factor
                 }
               if (substr($data,0,22) == "Remote Control status:") {    // skip down to the right section
-                  for ($row=1; $row<=5; $row++)
-                   { $data = fgets($file);
-                     $data=substr($data, 16, -1);                      // string from character 16, but skip the last
-                                                                       // character because its a white space. This 
-                                                                       // leaves us with either 'on' or 'off'
-                     $RCs[$row]=$data;                                 // store result
+                   while (strlen($data)>1)                            // last line of file often has no data in it, so only proceed if we have data ...
+                   {  $data = fgets($file);
+                      if($RCnum < 10) {
+                       // store string from character 16, but skip the last character as its a white space char
+                       $data=substr($data, 16, -1);
+                       $RCs[$RCnum]=$data;
+                      }
+                      else {
+                       // store string from character 16, but skip the last character as its a white space char
+                       $data=substr($data, 17, -1);
+                       $RCs[$RCnum]=$data;
+                      }
+                      $RCnum++;
                    }
+                   $RCnum=$RCnum-2;                                                    // fudge factor
                 }
               if (substr($data,0,22) == "Remote Control config:") {    // skip down to the right section
-                  for ($row=1; $row<=5; $row++)
-                  { $data = fgets($file);
-                    $data=substr($data, 17, -1);                       // string from character 16, but skip the last
-                                                                       // character because its a white space char.
-                                                                       // This leaves us with the name of the zone
-                    $RCc[$row]=$data;                                  // store result
-                   }
+              $RCnum = 1;                                              // reset and re-use variable
+                   while (strlen($data)>1)                             // last line of file often has no data in it, so only proceed if we have data ...
+                    { $data = fgets($file);
+                      if($RCnum < 10) {
+                       // store string from character 17, but skip the last character as its a white space char
+                        $RCc[$RCnum]=substr($data, 17, -1);
+                        $taskname[2*$RCnum+2]= "Switch ".$RCc[$RCnum].": On";    // overwrite default value with friendly name
+                        $taskname[2*$RCnum+3]= "Switch ".$RCc[$RCnum].": Off";
+                      }
+                      else {
+                       // store string from character 17, but skip the last character as its a white space char
+                        $RCc[$RCnum]=substr($data, 17, -1);
+                        $taskname[2*$RCnum+2]= "Switch ".$RCc[$RCnum].": On";    // overwrite default value with friendly name
+                        $taskname[2*$RCnum+3]= "Switch".$RCc[$RCnum].": Off";
+                      }
+                    $RCnum++;                                                    // bump number of channels
+                    } 
+                    $RCnum--;                                                    // fudge factor
+                    $RCnum--;
                 }
-              if (substr($data,0,14) == "Configuration:") {            // skip down to the right section
+              if (substr($data,0,14) == "Configuration:") {                      // skip down to the right section
                  $location=substr(fgets($file), 17, -1);
                  $routerIP=substr(fgets($file), 17, -1);
                  $localIP=substr(fgets($file), 17, -1);
@@ -107,105 +133,29 @@ for($i=0; $i<$time; $i++)
                  $Disktotal=substr(fgets($file), 17, -1);
                  $Memory=substr(fgets($file), 17, -1);
                  $Hardware=substr(fgets($file), 17, -1); }
-              if (substr($data,0,6) == "Email:") {                     // skip down to the right section
+              if (substr($data,0,6) == "Email:") {                               // skip down to the right section
                  $EMAIL_server=substr(fgets($file), 17, -1);
                  $EMAIL_port=substr(fgets($file), 17, -1);
                  $EMAIL_sender=substr(fgets($file), 17, -1);
                  $EMAIL_password=substr(fgets($file), 17, -1);
-                 $EMAIL_recipient=substr(fgets($file), 17, -1); }
-              if (substr($data,0,10) == "Cron jobs:") {                // skip down to the right section
-                    while (strlen($data)!=1)                           // last line of file often has no data in it, so only proceed if we have data ...
+                 $EMAIL_recipient=substr(fgets($file), 17, -1); }                // I DONT THINK THIS EXISTS ANYMORE - POSSIBLE TO REMOVE ?
+
+              if (substr($data,0,10) == "Cron jobs:") {                          // skip down to the right section
+                    while (strlen($data)!=1)                                     // last line of file is often blank, so only proceed if we have data ...
                     { $data = fgets($file);
-                      $task[$jobcount]=preg_split('/\s+/', $data);     // At this point the array elements are the cron job parameters.
-
-
-
-                      $tmp=strlen($data) -  // So to find the length of the string containing just the cron job parameters...
-                      strlen($task[$jobcount][0]) -
-                      strlen($task[$jobcount][1]) -
-                      strlen($task[$jobcount][2]) -
-                      strlen($task[$jobcount][3]) - 6;                 // find the length of the string containing just the cron job parameters.
-                                                                       // 6 is the fiddle factor - allows for spaces and white space characters.
-
-                      $task[$jobcount][5]=substr($data,-$tmp);         // Get the string, without the cron job parameters - this gives just the command.
-                      $task[$jobcount][5] = str_replace('"', "", $task[$jobcount][5]);  // loose any speech marks
-                      $task[$jobcount][5] = substr($task[$jobcount][5], 0, -1);         // loose white space char at end
-                                                                                        // and now we are ready for action.
-                      $tmp=strtolower(substr($task[$jobcount][5], 30, -21));            // all strings start with...
-                                                                                        //  'echo (scheduled task):(RasPi):'
-                                                                                        // and end with...
-                                                                                        //  ': >>/var/www/input.txt'
-                                                                                        // ...so loose it, and make it all lower case
-                                                                        // Strings are now all lower case, but still a little bit 'Linuxy', so substitute suitable strings.
-                      switch ($tmp) {
-                        case "remote control:1:on":
-                        $task[$jobcount][5]="Switch ".$RCc[1]." on";
-                        $task[$jobcount][6]="0";
-                        break;
-                        case "remote control:1:off":
-                        $task[$jobcount][5]="Switch ".$RCc[1]." off";
-                        $task[$jobcount][6]="1";
-                        break;
-                        case "remote control:2:on":
-                        $task[$jobcount][5]="Switch ".$RCc[2]." on";
-                        $task[$jobcount][6]="2";
-                        break;
-                        case "remote control:2:off":
-                        $task[$jobcount][5]="Switch ".$RCc[2]." off";
-                        $task[$jobcount][6]="3";
-                        break;
-                        case "remote control:3:on":
-                        $task[$jobcount][5]="Switch ".$RCc[3]." on";
-                        $task[$jobcount][6]="4";
-                        break;
-                        case "remote control:3:off":
-                        $task[$jobcount][5]="Switch ".$RCc[3]." off";
-                        $task[$jobcount][6]="5";
-                        break;
-                        case "remote control:4:on":
-                        $task[$jobcount][5]="Switch ".$RCc[4]." on";
-                        $task[$jobcount][6]="6";
-                        break;
-                        case "remote control:4:off":
-                        $task[$jobcount][5]="Switch ".$RCc[4]." off";
-                        $task[$jobcount][6]="7";
-                        break;
-                        case "remote control:5:on":
-                        $task[$jobcount][5]="Switch ".$RCc[5]." on";
-                        $task[$jobcount][6]="8";
-                        break;
-                        case "remote control:5:off":
-                        $task[$jobcount][5]="Switch ".$RCc[5]." off";
-                        $task[$jobcount][6]="9";
-                        break;
-                        case "mode:standby":
-                        $task[$jobcount][5]="Set alarm to standby";
-                        $task[$jobcount][6]="10";
-                        break;
-                        case "mode:part set":
-                        $task[$jobcount][5]="Set alarm to part set";
-                        $task[$jobcount][6]="11";
-                        break;
-                        case "mode:full set":
-                        $task[$jobcount][5]="Set alarm to full set";
-                        $task[$jobcount][6]="12";
-                        break;
-                        case "check ip":
-                        $task[$jobcount][5]="Check router IP address";
-                        $task[$jobcount][6]="13";
-                        break;
-                      }
-                      $jobcount++;                                                      // also used for new cron jobs
+                      $task[$jobcount]=preg_split('/\s+/', $data);               // At this point the array elements are the cron job parameters.
+                      $task[$jobcount][6]=$taskname[$task[$jobcount][5]];        // Get friendly task name based on task number
+                      $jobcount++;                                               // Counter also used when creating new cron jobs
                     }
                 $jobcount--;  
                 }
-              if (substr($data,0,6) == "Users:") {          // skip down to the right section
+              if (substr($data,0,6) == "Users:") {                               // skip down to the right section
                   do { $data = fgets($file);
                        $usercount++;
-                       if (strlen($data)>1)              // last line read is empty, only proceed if we have data..
+                       if (strlen($data)>1)                                      // last line read is empty, only proceed if we have data..
                          { $user[$usercount]=explode(",", $data);
                          }
-                     } while (strlen($data)>1);          // keep reading lines until we find a NULL string or just an LF
+                     } while (strlen($data)>1);                                  // keep reading lines until we find a NULL string or just an LF
                   $usercount--;   
                 }
           }
