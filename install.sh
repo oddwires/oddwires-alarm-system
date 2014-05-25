@@ -40,12 +40,6 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
 fi
 echo " "
 
-if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
-  # Enable root account and assign a password...
-  sudo passwd root
-fi
-echo " "
-
 clear
 echo "****************************************"
 echo "* Oddwires Alarm System installer      *"
@@ -63,6 +57,8 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   # Mail Transfer Agent...
   sudo apt-get install -y heirloom-mailx
 fi
+
+read -n1 -r -p "Press any key to continue..." key
 echo " "
 
 clear
@@ -100,6 +96,7 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   # restart the service...
   sudo service samba restart
 fi
+read -n1 -r -p "Press any key to continue..." key
 echo " "
 
 clear
@@ -119,6 +116,8 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   # Apache install...
   sudo apt-get install -y apache2 php5 libapache2-mod-php5
 fi
+
+read -n1 -r -p "Press any key to continue..." key
 echo " "
 
 clear
