@@ -17,10 +17,6 @@ New version 2.00 code provides a re-worked GUI and additional functionality.<br>
   Scheduled tasks<br>
 </ul>
 
-<<<<<<< HEAD
-I've got a lot more details on my web site ...
-=======
 There's a lot more details on my web site ...
->>>>>>> 1874cfe943ca9f1799108d3ad869b896d63be058
 
 <h2>http://oddwires.co.uk </h2>
