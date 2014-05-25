@@ -1,8 +1,9 @@
 <h2>Oddwires-Alarm-System</h2>
 
 Home alarm and automation system
-Developed to run on Raspberry Pi, and using the jQT JavaScript plugin to provide an iPhone 4 interface
+Developed to run on Raspberry Pi, and using the jQT JavaScript plugin to provide an iPhone interface.
 
+New version 2.00 code provides a re-worked GUI and additional functionality.<br>
 
 <b>Features:</b><br>
 <ul>
@@ -16,6 +17,10 @@ Developed to run on Raspberry Pi, and using the jQT JavaScript plugin to provide
   Scheduled tasks<br>
 </ul>
 
+<<<<<<< HEAD
 I've got a lot more details on my web site ...
+=======
+There's a lot more details on my web site ...
+>>>>>>> 1874cfe943ca9f1799108d3ad869b896d63be058
 
 <h2>http://oddwires.co.uk </h2>
