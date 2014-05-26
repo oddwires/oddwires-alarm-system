@@ -64,6 +64,6 @@ if ($found == false) { header('Location: /notfound.php#notfound'); } // Hello Ho
 
             <ul class="edgetoedge scroll" style="margin-top: 0">
                  <?php for ($row=0; $row<=$count; $row++) {
-                       $tmp = '<li>'.$logs[$row][0].' - '.$logs[$row][1].' @ '.$logs[$row][2].'<br>'.$logs[$row][3].'</li>';
+                       $tmp = '<li>'.$logs[$row][0].' '.$logs[$row][1].'@'.$logs[$row][2].'<br>'.$logs[$row][3].'</li>';
                        echo $tmp; } ?>
             </ul>
