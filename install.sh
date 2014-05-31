@@ -40,6 +40,12 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
 fi
 echo " "
 
+if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
+  # Enable root account and assign a password...
+  sudo passwd root
+fi
+echo " "
+
 clear
 echo "****************************************"
 echo "* Oddwires Alarm System installer      *"
@@ -57,8 +63,6 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   # Mail Transfer Agent...
   sudo apt-get install -y heirloom-mailx
 fi
-
-read -n1 -r -p "Press any key to continue..." key
 echo " "
 
 clear
@@ -90,13 +94,17 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   # Configure for Windows 7 clients...
   sudo cp /home/pi/Download/oddwires-alarm-system/smb.conf /etc/samba/smb.conf
   # add password for Pi account...
+  echo " "
+  echo "SAMBA needs to set a password for the pi user to access the data shares."
+  echo "This will be used to access the log files and web folder shares"
+  echo "from a Windows network."
+  echo "(tip - this can be the same as use your current Pi password)"
   sudo smbpasswd -a pi
   # enable the password for the root account...
   sudo smbpasswd -e pi
   # restart the service...
   sudo service samba restart
 fi
-read -n1 -r -p "Press any key to continue..." key
 echo " "
 
 clear
@@ -116,8 +124,6 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   # Apache install...
   sudo apt-get install -y apache2 php5 libapache2-mod-php5
 fi
-
-read -n1 -r -p "Press any key to continue..." key
 echo " "
 
 clear
@@ -151,13 +157,10 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
   fi
 
   echo "Installing web page"
-  # Ensure web folder permissions are correct for our install. Permissions have been based on the artical here...
-  # http://serverfault.com/questions/357108/what-permissions-should-my-website-files-folders-have-on-a-linux-webserver
 set -x
   sudo chown -R root /var/www/                                     # file can only be edited by root
-  sudo chgrp www-data /var/www/
+  sudo chgrp -R www-data /var/www/
   chmod -R 750 /var/www/                                           # Apache access limited to read and execute
-  chmod g+s /var/www/                                              # Sticky bit - new files inherit attributes from parent folder
 set +x
   echo "Copying web site files..."
 set -x
@@ -168,13 +171,17 @@ set +x
   echo "Creating sub folders..."
 set -x
   mkdir /var/www/logs
-  chmod -R 750 /var/www/logs
-  chmod g+w /var/www/logs
+  chmod -R 770 /var/www/logs
   mkdir /var/www/uploads
-  chmod -R 750 /var/www/uploads
-  chmod g+w /var/www/uploads
+  chmod -R 770 /var/www/uploads
 set +x
 fi
+
+# give pi user read only access to web files...
+   echo "Grant user pi read only access to the web folder..."
+set -x
+   usermod -aG www-data pi
+set +x
 
 read -n1 -r -p "Press any key to continue..." key
 echo " "
