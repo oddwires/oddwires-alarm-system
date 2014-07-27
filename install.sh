@@ -156,17 +156,17 @@ if [[ "$key" = "C" ]] || [[ "$key" = "c" ]]; then
       rm -f /var/www/index.html;
   fi
 
-  echo "Installing web page"
-set -x
-  sudo chown -R root /var/www/                                     # file can only be edited by root
-  sudo chgrp -R www-data /var/www/
-  chmod -R 750 /var/www/                                           # Apache access limited to read and execute
-set +x
   echo "Copying web site files..."
 set -x
   sudo cp -R /home/pi/Download/oddwires-alarm-system/. /var/www/   # Copy code to web page
   rm -f /var/www/install.sh                                        # tidy up...
   rm -f /var/www/README.md
+set +x
+  echo "Installing web page"
+set -x
+  sudo chown -R root /var/www/                                     # file can only be edited by root
+  sudo chgrp -R www-data /var/www/
+  chmod -R 750 /var/www/                                           # Apache access limited to read and execute
 set +x
   echo "Creating sub folders..."
 set -x
