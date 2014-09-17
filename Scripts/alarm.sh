@@ -794,7 +794,7 @@ if [[ $tmp = "0002" ]] || [[ $hardware = "0003" ]]; then
     hardware='Raspberry Pi Rev 1.0'
     InitPorts                                               # we are on a PI so initialise the ports
 fi
-if [[ $tmp = "000d" ]] || [[ $tmp = "000e" ]] || [[ $hardware = "000f" ]]; then
+if [[ $tmp = "000d" ]] || [[ $tmp = "000e" ]] || [[ $tmp = "000f" ]]; then
     hardware='Raspberry Pi Rev 2.0'
     InitPorts                                               # we are on a PI so initialise the ports
 fi
