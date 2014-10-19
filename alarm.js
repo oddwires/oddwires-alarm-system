@@ -418,3 +418,9 @@ function Password() {
                    }
                    return "";
             }
+
+            function passval2(parm1,parm2) {
+                $('#'+parm1).text(parm2)
+                jQT.goTo('#setup', 'slideright');                                 // ...and go to task edit screen
+                return false;                                                     // returning false cancels the original hyperlink
+            }
