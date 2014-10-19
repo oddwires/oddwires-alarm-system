@@ -4,7 +4,7 @@ include("readvars.php");                         // common code to read variable
 
 <div id="setup" class="selectable">
      <div class="toolbar"><h1>Setup</h1>
-         <a class="back menu" href="#menusheet">Menu</a>
+         <a class="back2div slideright" href="#menusheet">Menu</a>
      </div>
      <div id="setupscroll" class="scroll">
     <!-- need to put a copy of setupscroll.php in here to handle the screen initialisation -->
