@@ -2,7 +2,7 @@
 
 UPDATE 01/07/2018:<br>
 This repo is completely defunct. There have been several updates to the Raspberry Pi Debian image which have killed off the Mail Transfer Agent, and messed up a few other bits and peices in the build.<br>
-I've also re-worked the GUI from JQuery Touch to  JQuery Mobile, and added a HomeKit Bridge to provide an additional voice interface.
+I've also re-worked the GUI from JQuery Touch to  JQuery Mobile, and added a HomeKit Bridge to provide an additional voice interface.<br>
 If you are thinking of trying the install, use the WorkInProgress Repo, which addresses these issues, and is starting to look more complete than this one.
 
 Home alarm and automation system
